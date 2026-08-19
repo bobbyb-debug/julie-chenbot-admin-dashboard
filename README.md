@@ -96,6 +96,35 @@ never values. See `docs/API.md` for exactly why `JULIE_API_URL`/`JULIE_API_KEY` 
   applies to (original nominees, veto removal/replacement).
 - Never commit `.env*` files (gitignored) or `data/*.db*` (gitignored).
 
+### Resetting a password
+
+There is no self-service "forgot password" flow (this is a small admin tool, not a public app) —
+a lost password is reset from wherever the app is deployed, using the same database the running
+app uses. From that host's console:
+
+```bash
+node scripts/reset-password.ts <email> <new-password>
+```
+
+- Requires `DASHBOARD_DATA_DIR` to be set the same way it is for the running app (or run from a
+  working directory where `./data` already holds `dashboard.db`) — it opens the *existing*
+  database, it doesn't create a new user.
+- Refuses to run if no user with that email exists, or if the password is under 12 characters.
+- Only replaces `password_hash`/`password_salt` for that one user — role, disabled status, and
+  every other user are untouched.
+- Never prints, logs, or echoes the password anywhere, including in its own error messages.
+
+On Railway specifically, run this from that service's shell/console (Railway dashboard → the
+dashboard service → the console/shell tab), where `DASHBOARD_DATA_DIR` is already set in the
+environment exactly as the running app sees it:
+
+```bash
+node scripts/reset-password.ts moderator@example.com "a-new-strong-password"
+```
+
+The user signs in with the new password immediately — no restart needed, since both the running
+app and this script read the same on-disk SQLite file.
+
 ## API connection
 
 This dashboard is a pure client of Julie's admin API — it owns no game state, knowledge, or
@@ -168,10 +197,9 @@ unnecessary dependencies."
 unreachable API, since both paths return a non-2xx/failed fetch from `lib/julie-client.ts`.
 Confirm directly: `curl -H "Authorization: Bearer $JULIE_API_KEY" $JULIE_API_URL/api/v1/health`.
 
-**Login says "Incorrect email or password" but you're sure it's right.** Passwords are
-case-sensitive and there's no reset flow yet — recreate the account with
-`node scripts/create-admin.ts` (emails are unique, so use a different address, or have an admin
-disable the old one first).
+**Login says "Incorrect email or password" but you're sure it's right, or you've lost the
+password entirely.** Passwords are case-sensitive and, since they're scrypt-hashed, cannot be
+recovered — only replaced. See "Resetting a password" under Security below.
 
 **"Too many attempts" on login.** Rate-limited at 10 attempts per 15 minutes per email, tracked
 in `data/dashboard.db`. Wait it out, or delete the `login_attempts` table's rows for that email if
