@@ -1,7 +1,17 @@
 import Link from "next/link";
+import {
+  AlertTriangle,
+  BookOpenCheck,
+  CheckCircle2,
+  PenSquare,
+  Search,
+  Sparkles,
+  Target,
+  Users,
+} from "lucide-react";
 import { Card } from "@/components/Card";
 import { SeverityBadge } from "@/components/SeverityBadge";
-import { StatusBadge } from "@/components/StatusBadge";
+import { StatusBadge, type Status } from "@/components/StatusBadge";
 import { EmptyState, JulieOfflineState } from "@/components/EmptyState";
 import { julie } from "@/lib/julie-client";
 import { safeJulieCall } from "@/lib/safe-julie";
@@ -88,13 +98,13 @@ export default async function OverviewPage() {
         <Card>
           {attention.length === 0 ? (
             <p className="flex items-center gap-2 text-sm text-status-healthy">
-              <span aria-hidden>🟢</span> Everything looks good.
+              <CheckCircle2 size={16} strokeWidth={2} aria-hidden /> Everything looks good.
             </p>
           ) : (
             <ul className="flex flex-col gap-2">
               {attention.map((item, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-status-attention">
-                  <span aria-hidden>⚠️</span>
+                  <AlertTriangle size={16} strokeWidth={2} className="mt-0.5 shrink-0" aria-hidden />
                   <span className="text-text-secondary">{item}</span>
                 </li>
               ))}
@@ -133,7 +143,101 @@ export default async function OverviewPage() {
           )}
         </Card>
       </section>
+
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-text-primary">Source Health</h2>
+          <Link href="/dashboard/sources" className="text-xs text-accent-strong hover:underline">
+            View all →
+          </Link>
+        </div>
+        <Card>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <SourceRow
+              label="Joker's Updates (RSS)"
+              status={sources.rss.last_guid ? "healthy" : "unknown"}
+              detail={sources.rss.last_title ? `Last: ${sources.rss.last_title}` : "No item observed yet"}
+            />
+            <SourceRow
+              label="House Image"
+              status={monitorStatus(sources.monitors.monitors, "HouseImageMonitor")}
+              detail={sources.house_image.url || "No URL discovered yet"}
+            />
+            <SourceRow
+              label="Competition Monitor"
+              status={monitorStatus(sources.monitors.monitors, "CompetitionMonitor")}
+              detail={sources.competition.competition}
+            />
+            <SourceRow
+              label="Hamsterwatch"
+              status={sources.hamsterwatch ? monitorStatus(sources.monitors.monitors, "HamsterwatchMonitor") : "problem"}
+              detail={
+                sources.hamsterwatch
+                  ? `Archive: ${sources.hamsterwatch.archive_size} section(s)`
+                  : "Failed to initialize"
+              }
+            />
+          </div>
+        </Card>
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-semibold text-text-primary">Quick Actions</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <QuickAction href="/dashboard/knowledge/teach?mode=state" icon={Target} label="Update HOH / Nominees / POV" />
+          <QuickAction href="/dashboard/knowledge/teach?mode=batch" icon={PenSquare} label="Teach Fact" />
+          <QuickAction href="/dashboard/knowledge/teach?mode=batch" icon={Sparkles} label="Add Correction" />
+          <QuickAction href="/dashboard/knowledge" icon={Search} label="Search Knowledge" />
+          <QuickAction href="/dashboard/activity" icon={BookOpenCheck} label="View Recent Events" />
+          <QuickAction href="/dashboard/game-state" icon={Users} label="Full Game State" />
+        </div>
+      </section>
     </div>
+  );
+}
+
+function monitorStatus(
+  monitors: { name: string; last_status: string }[],
+  name: string,
+): Status {
+  const found = monitors.find((m) => m.name === name)?.last_status;
+  if (found === "healthy") return "healthy";
+  if (found === "degraded") return "attention";
+  if (found === "unhealthy") return "problem";
+  return "unknown";
+}
+
+function SourceRow({ label, status, detail }: { label: string; status: Status; detail: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle p-3">
+      <div className="min-w-0">
+        <div className="text-sm text-text-primary">{label}</div>
+        <p className="truncate text-xs text-text-muted" title={detail}>
+          {detail}
+        </p>
+      </div>
+      <StatusBadge status={status} />
+    </div>
+  );
+}
+
+function QuickAction({
+  href,
+  icon: Icon,
+  label,
+}: {
+  href: string;
+  icon: typeof Target;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex flex-col items-start gap-2 rounded-xl border border-border-subtle bg-bg-surface p-4 text-sm text-text-secondary transition hover:border-accent/40 hover:bg-bg-hover hover:text-text-primary"
+    >
+      <Icon size={18} strokeWidth={1.75} className="text-accent-strong" aria-hidden />
+      {label}
+    </Link>
   );
 }
 

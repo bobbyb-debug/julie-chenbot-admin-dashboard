@@ -1,5 +1,7 @@
+import { AlertTriangle } from "lucide-react";
 import { Card } from "@/components/Card";
 import { EmptyState, JulieOfflineState } from "@/components/EmptyState";
+import { IconTitle } from "@/components/IconTitle";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { StatusBadge, type Status } from "@/components/StatusBadge";
 import { formatTimestamp } from "@/lib/format";
@@ -53,7 +55,7 @@ export default async function DiagnosticsPage() {
       </div>
 
       {health.last_error && (
-        <Card title="⚠️ Last Error" className="border-status-problem/40">
+        <Card title={<IconTitle icon={AlertTriangle}>Last Error</IconTitle>} className="border-status-problem/40">
           <p className="text-sm text-text-secondary">{health.last_error}</p>
         </Card>
       )}

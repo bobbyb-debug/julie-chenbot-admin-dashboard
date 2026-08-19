@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ToastProvider";
 import { createUserAction, setDisabledAction, setRoleAction } from "./actions";
 import type { Role } from "@/lib/session";
 import type { UserRow } from "@/lib/users";
@@ -9,6 +10,7 @@ import { ROLE_LABELS } from "@/lib/rbac";
 
 export function UserManagement({ users, currentUserId }: { users: UserRow[]; currentUserId: number }) {
   const router = useRouter();
+  const toast = useToast();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -17,7 +19,12 @@ export function UserManagement({ users, currentUserId }: { users: UserRow[]; cur
     setError(null);
     startTransition(async () => {
       const result = await setRoleAction(userId, role);
-      if (!result.ok) setError(result.message ?? "Failed.");
+      if (!result.ok) {
+        setError(result.message ?? "Failed.");
+        toast.push(result.message ?? "Failed to change role.", "error");
+      } else {
+        toast.push(`Role updated to ${ROLE_LABELS[role]}.`, "success");
+      }
       router.refresh();
     });
   }
@@ -26,7 +33,12 @@ export function UserManagement({ users, currentUserId }: { users: UserRow[]; cur
     setError(null);
     startTransition(async () => {
       const result = await setDisabledAction(userId, disabled);
-      if (!result.ok) setError(result.message ?? "Failed.");
+      if (!result.ok) {
+        setError(result.message ?? "Failed.");
+        toast.push(result.message ?? "Failed to update user.", "error");
+      } else {
+        toast.push(disabled ? "User disabled." : "User enabled.", "success");
+      }
       router.refresh();
     });
   }
@@ -81,7 +93,13 @@ export function UserManagement({ users, currentUserId }: { users: UserRow[]; cur
       </ul>
 
       {formOpen ? (
-        <CreateUserForm onDone={() => { setFormOpen(false); router.refresh(); }} />
+        <CreateUserForm
+          onDone={() => {
+            setFormOpen(false);
+            toast.push("User created.", "success");
+            router.refresh();
+          }}
+        />
       ) : (
         <button
           onClick={() => setFormOpen(true)}

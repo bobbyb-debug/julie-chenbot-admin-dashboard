@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { AlertTriangle, History, Search } from "lucide-react";
 import { Card } from "@/components/Card";
+import { IconTitle } from "@/components/IconTitle";
 import { JulieOfflineState } from "@/components/EmptyState";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatTimestamp } from "@/lib/format";
@@ -8,33 +10,24 @@ import { safeJulieCall } from "@/lib/safe-julie";
 
 export const dynamic = "force-dynamic";
 
-const TOPICS: { topic: string; label: string }[] = [
-  { topic: "HOH", label: "Head of Household" },
-  { topic: "NOMINEES", label: "Nominees" },
-  { topic: "VETO_WINNER", label: "Power of Veto" },
-  { topic: "HAVE_NOTS", label: "Have-Nots" },
-];
-
 export default async function GameStatePage() {
   const result = await safeJulieCall(async () => {
-    const [gameState, conflicts] = await Promise.all([julie.gameState(), julie.conflicts()]);
-    return { gameState, conflicts };
+    const [gameState, conflicts, nomineeHistory, vetoHistory] = await Promise.all([
+      julie.gameState(),
+      julie.conflicts(),
+      julie.stateWhy("NOMINEES"),
+      julie.stateWhy("VETO_WINNER"),
+    ]);
+    return { gameState, conflicts, nomineeHistory, vetoHistory };
   });
 
   if (!result.ok) {
-    return <JulieOfflineState detail={result.offline ? result.message : result.message} />;
+    return <JulieOfflineState detail={result.message} />;
   }
 
-  const { gameState, conflicts } = result.data;
+  const { gameState, conflicts, nomineeHistory, vetoHistory } = result.data;
   const house = gameState.house_status;
   const competition = gameState.competition;
-
-  const values: Record<string, string> = {
-    HOH: house.hoh,
-    NOMINEES: house.nominees.join(", "),
-    VETO_WINNER: house.veto_holder,
-    HAVE_NOTS: house.have_nots.join(", "),
-  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -54,7 +47,10 @@ export default async function GameStatePage() {
       </div>
 
       {conflicts.conflicts.length > 0 && (
-        <Card title="⚠️ Conflicts Detected" className="border-status-attention/40">
+        <Card
+          title={<IconTitle icon={AlertTriangle}>Conflicts Detected</IconTitle>}
+          className="border-status-attention/40"
+        >
           <ul className="flex flex-col gap-3">
             {conflicts.conflicts.map((conflict) => (
               <li key={conflict.topic} className="text-sm">
@@ -71,30 +67,50 @@ export default async function GameStatePage() {
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {TOPICS.map(({ topic, label }) => (
-          <Card key={topic}>
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-xs font-medium text-text-secondary">{label}</div>
-                <div className="mt-1 text-2xl font-semibold text-text-primary">
-                  {values[topic] || "—"}
-                </div>
-                {topic === "VETO_WINNER" && house.veto_holder && (
-                  <div className="mt-1 text-xs text-text-muted">
-                    {house.veto_used ? "Used" : "Not used"}
-                  </div>
-                )}
-              </div>
-              <Link
-                href={`/dashboard/knowledge/why/${topic}`}
-                className="shrink-0 rounded-lg border border-border-default px-2.5 py-1 text-xs text-text-secondary hover:bg-bg-hover hover:text-text-primary"
-              >
-                Why?
-              </Link>
-            </div>
-          </Card>
-        ))}
+        <Card>
+          <FieldHeader label="Head of Household" topic="HOH" />
+          <div className="mt-1 text-2xl font-semibold text-text-primary">{house.hoh || "—"}</div>
+        </Card>
+
+        <Card>
+          <FieldHeader label="Have-Nots" topic="HAVE_NOTS" />
+          <div className="mt-1 text-2xl font-semibold text-text-primary">
+            {house.have_nots.length ? house.have_nots.join(", ") : "—"}
+          </div>
+        </Card>
       </div>
+
+      <Card>
+        <FieldHeader label="Nominees" topic="NOMINEES" />
+        <div className="mt-1 text-2xl font-semibold text-text-primary">
+          {house.nominees.length ? house.nominees.join(", ") : "—"}
+        </div>
+        <p className="mt-1 text-xs text-text-muted">Current nominees, per the live House Status source.</p>
+
+        <NomineeTimeline history={nomineeHistory.history} label="Taught history for this topic" />
+      </Card>
+
+      <Card>
+        <FieldHeader label="Power of Veto" topic="VETO_WINNER" />
+        <div className="mt-1 text-2xl font-semibold text-text-primary">{house.veto_holder || "—"}</div>
+
+        <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-border-subtle pt-4 sm:grid-cols-4">
+          <PovField label="Used" value={house.veto_holder ? (house.veto_used ? "Yes" : "No") : "—"} />
+          <PovField label="Removed" value={null} />
+          <PovField label="Replacement Nominee" value={null} />
+        </dl>
+        <p className="mt-3 text-xs text-text-muted">
+          &ldquo;Removed&rdquo; and &ldquo;Replacement Nominee&rdquo; aren&apos;t exposed as structured
+          fields by the production API today -- Julie&apos;s HouseStatus only tracks the veto holder
+          and whether it was used. That detail, when known, lives in free-text Knowledge (often a
+          Correction) rather than a dedicated field.{" "}
+          <Link href="/dashboard/knowledge?type=correction" className="inline-flex items-center gap-1 text-accent-strong hover:underline">
+            <Search size={12} aria-hidden /> Search Corrections
+          </Link>
+        </p>
+
+        <NomineeTimeline history={vetoHistory.history} label="Taught history for POV winner" />
+      </Card>
 
       <Card title="Competition">
         <div className="flex flex-wrap items-center gap-6">
@@ -113,6 +129,64 @@ export default async function GameStatePage() {
       <Card title="Live Feeds">
         <Field label="Status" value={house.feeds || "unknown"} />
       </Card>
+    </div>
+  );
+}
+
+function FieldHeader({ label, topic }: { label: string; topic: string }) {
+  return (
+    <div className="flex items-start justify-between">
+      <div className="text-xs font-medium text-text-secondary">{label}</div>
+      <Link
+        href={`/dashboard/knowledge/why/${topic}`}
+        className="shrink-0 rounded-lg border border-border-default px-2.5 py-1 text-xs text-text-secondary hover:bg-bg-hover hover:text-text-primary"
+      >
+        Why?
+      </Link>
+    </div>
+  );
+}
+
+function PovField({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div>
+      <div className="text-xs font-medium text-text-secondary">{label}</div>
+      <div className={`mt-0.5 text-sm ${value === null ? "italic text-text-muted" : "text-text-primary"}`}>
+        {value ?? "Not available"}
+      </div>
+    </div>
+  );
+}
+
+function NomineeTimeline({
+  history,
+  label,
+}: {
+  history: { id: number; content: string; created_at: string }[];
+  label: string;
+}) {
+  if (history.length <= 1) return null;
+
+  return (
+    <div className="mt-4 border-t border-border-subtle pt-3">
+      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-text-secondary">
+        <History size={13} aria-hidden /> {label}
+      </p>
+      <p className="mb-2 text-xs text-text-muted">
+        Julie&apos;s API has no separate &ldquo;original nominees&rdquo; field -- this is the
+        chronological record of every STATE taught for this topic, which is how an original
+        nomination followed by a veto replacement actually shows up.
+      </p>
+      <ol className="flex flex-col gap-1.5">
+        {history.map((item, i) => (
+          <li key={item.id} className="flex items-baseline gap-2 text-sm">
+            <span className="text-xs text-text-muted">{formatTimestamp(item.created_at)}</span>
+            <span className={i === history.length - 1 ? "font-medium text-text-primary" : "text-text-muted line-through"}>
+              {item.content}
+            </span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }

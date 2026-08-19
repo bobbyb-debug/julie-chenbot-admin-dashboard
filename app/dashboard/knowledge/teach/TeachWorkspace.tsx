@@ -1,8 +1,11 @@
 "use client";
 
+import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Card } from "@/components/Card";
+import { IconTitle } from "@/components/IconTitle";
 import { KnowledgeTypeBadge } from "@/components/KnowledgeTypeBadge";
+import { useToast } from "@/components/ToastProvider";
 import {
   batchApplyAction,
   batchPlanAction,
@@ -19,6 +22,7 @@ const PLACEHOLDERS: Record<Mode, string> = {
 };
 
 export function TeachWorkspace({ initialMode }: { initialMode: Mode }) {
+  const toast = useToast();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [text, setText] = useState("");
   const [reason, setReason] = useState("");
@@ -44,8 +48,10 @@ export function TeachWorkspace({ initialMode }: { initialMode: Mode }) {
         mode === "batch" ? await batchPlanAction(text) : await statePlanAction(text, reason || undefined);
 
       if (!result.ok || !result.data) {
-        setError(result.message ?? "Failed to build preview.");
+        const message = result.message ?? "Failed to build preview.";
+        setError(message);
         setPlan(null);
+        toast.push(message, "error");
         return;
       }
 
@@ -74,13 +80,25 @@ export function TeachWorkspace({ initialMode }: { initialMode: Mode }) {
           : await stateApplyAction(text, reason || undefined, lineNumbers);
 
       if (!result.ok || !result.data) {
-        setError(result.message ?? "Failed to apply changes.");
+        const message = result.message ?? "Failed to apply changes.";
+        setError(message);
+        toast.push(message, "error");
         return;
       }
 
       setApplyResult(result.data);
       setPlan(null);
       setText("");
+      toast.push(
+        mode === "batch"
+          ? `Taught ${result.data.written.length} item(s).`
+          : `Updated ${result.data.written.length} item(s).${
+              result.data.applied_topics?.length
+                ? ` Live state changed: ${result.data.applied_topics.join(", ")}.`
+                : ""
+            }`,
+        "success",
+      );
     });
   }
 
@@ -134,7 +152,7 @@ export function TeachWorkspace({ initialMode }: { initialMode: Mode }) {
       )}
 
       {applyResult && (
-        <Card title="✅ Applied" className="border-status-healthy/40">
+        <Card title={<IconTitle icon={CheckCircle2}>Applied</IconTitle>} className="border-status-healthy/40">
           <p className="text-sm text-text-secondary">
             Wrote {applyResult.written.length} item(s).
             {applyResult.applied_topics && applyResult.applied_topics.length > 0 && (
@@ -148,7 +166,9 @@ export function TeachWorkspace({ initialMode }: { initialMode: Mode }) {
         <Card title="Review" subtitle="Select or deselect lines, then apply. Nothing changes until you do.">
           {plan.conflicts.length > 0 && (
             <div className="mb-4 rounded-lg border border-status-attention/30 bg-status-attention/5 p-3">
-              <p className="mb-2 text-xs font-medium text-status-attention">⚠️ Potential changes</p>
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-status-attention">
+                <AlertTriangle size={13} aria-hidden /> Potential changes
+              </p>
               <ul className="flex flex-col gap-1 text-xs text-text-secondary">
                 {plan.conflicts.map((c, i) => (
                   <li key={i}>
@@ -189,7 +209,9 @@ export function TeachWorkspace({ initialMode }: { initialMode: Mode }) {
 
           {plan.invalid.length > 0 && (
             <div className="mt-4 rounded-lg border border-status-problem/30 bg-status-problem/5 p-3">
-              <p className="mb-1 text-xs font-medium text-status-problem">❌ Could not parse</p>
+              <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-status-problem">
+                <XCircle size={13} aria-hidden /> Could not parse
+              </p>
               <ul className="flex flex-col gap-1 text-xs text-text-secondary">
                 {plan.invalid.map((line) => (
                   <li key={line.line_number}>

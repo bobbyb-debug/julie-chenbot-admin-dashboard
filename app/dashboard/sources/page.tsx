@@ -1,4 +1,6 @@
+import { AlertTriangle } from "lucide-react";
 import { Card } from "@/components/Card";
+import { IconTitle } from "@/components/IconTitle";
 import { JulieOfflineState } from "@/components/EmptyState";
 import { StatusBadge, type Status } from "@/components/StatusBadge";
 import { formatTimestamp } from "@/lib/format";
@@ -34,7 +36,7 @@ export default async function SourcesPage() {
       </div>
 
       {monitors.failed_monitors.length > 0 && (
-        <Card title="⚠️ Failed to Initialize" className="border-status-problem/40">
+        <Card title={<IconTitle icon={AlertTriangle}>Failed to Initialize</IconTitle>} className="border-status-problem/40">
           <ul className="flex flex-col gap-1 text-sm text-text-secondary">
             {monitors.failed_monitors.map((f) => (
               <li key={f.name}>

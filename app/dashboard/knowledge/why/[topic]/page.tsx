@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { AlertTriangle, ArrowLeft, BookOpen } from "lucide-react";
 import { Card } from "@/components/Card";
 import { EmptyState, JulieOfflineState } from "@/components/EmptyState";
+import { IconTitle } from "@/components/IconTitle";
 import { KnowledgeTypeBadge } from "@/components/KnowledgeTypeBadge";
 import { formatTimestamp } from "@/lib/format";
 import { julie } from "@/lib/julie-client";
@@ -24,8 +26,8 @@ export default async function WhyPage({ params }: { params: Promise<{ topic: str
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div>
-        <Link href="/dashboard/game-state" className="text-xs text-accent-strong hover:underline">
-          ← Back to Game State
+        <Link href="/dashboard/game-state" className="inline-flex items-center gap-1 text-xs text-accent-strong hover:underline">
+          <ArrowLeft size={12} aria-hidden /> Back to Game State
         </Link>
         <h1 className="mt-1 text-lg font-semibold text-text-primary">
           Why does Julie think {topic.replace(/_/g, " ").toLowerCase()} is what it is?
@@ -54,7 +56,7 @@ export default async function WhyPage({ params }: { params: Promise<{ topic: str
       </Card>
 
       {isConflict && (
-        <Card title="⚠️ Conflict" className="border-status-attention/40">
+        <Card title={<IconTitle icon={AlertTriangle}>Conflict</IconTitle>} className="border-status-attention/40">
           <p className="text-sm text-text-secondary">
             The taught STATE (<strong>{data.current_state?.content}</strong>) and the live
             House Status value (<strong>{data.house_status_value || "(empty)"}</strong>) disagree.
@@ -91,8 +93,8 @@ export default async function WhyPage({ params }: { params: Promise<{ topic: str
         ) : (
           <ul className="flex flex-col gap-2">
             {data.related_facts.map((item) => (
-              <li key={item.id} className="text-sm text-text-secondary">
-                📌 {item.content}
+              <li key={item.id} className="flex items-start gap-1.5 text-sm text-text-secondary">
+                <BookOpen size={13} className="mt-0.5 shrink-0 text-text-muted" aria-hidden /> {item.content}
               </li>
             ))}
           </ul>

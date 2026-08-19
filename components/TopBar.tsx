@@ -1,4 +1,5 @@
 import { logoutAction } from "@/app/dashboard/actions";
+import { RefreshControl } from "@/components/RefreshControl";
 import { ROLE_LABELS } from "@/lib/rbac";
 import type { Role } from "@/lib/session";
 
@@ -34,7 +35,8 @@ export function TopBar({
         </span>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
+        <RefreshControl />
         <div className="text-right text-xs leading-tight">
           <div className="font-medium text-text-primary">{email}</div>
           <div className="text-text-muted">{ROLE_LABELS[role]}</div>
