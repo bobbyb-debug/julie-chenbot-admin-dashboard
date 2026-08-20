@@ -6,6 +6,14 @@ This documents the **actual, deployed** API this dashboard talks to — read dir
 merge commit `e21fc16`), not inferred or guessed. If this file and the production code ever
 disagree, the code is right — re-verify before trusting this document.
 
+> **Pending architecture fix, not yet merged/deployed:** the `official_state` field on
+> `GET /api/v1/game-state` and the corrected `house_status`/conflict semantics described below
+> come from a JulieChenBot PR (`fix/official-facts-architecture`) that fixes automated live-feed
+> parsing being able to silently overwrite manually-confirmed game facts. Until that PR is merged
+> and deployed, the live API does not yet return `official_state`, and `/teach update`/
+> `/api/v1/state/apply` still also mutate `house_status` directly. Re-verify against the deployed
+> commit before trusting this doc's shape as currently live.
+
 Base URL: `https://juliechenbot-production.up.railway.app` (configured here as `JULIE_API_URL`,
 server-side only — see [ARCHITECTURE.md](ARCHITECTURE.md)).
 
@@ -35,12 +43,24 @@ instead) but documented here since it's part of the real, live contract.
 | Method | Path | Body | Response |
 |---|---|---|---|
 | GET | `/api/v1/health` | — | `{ engine: {...}, info: {...} }` — see `EngineHealth`/`EngineInfo` in `lib/julie-types.ts` |
-| GET | `/api/v1/game-state` | — | `{ house_status: {...}, competition: {...} }` |
+| GET | `/api/v1/game-state` | — | `{ house_status: {...}, competition: {...}, official_state: {...} }` |
 | GET | `/api/v1/conflicts` | — | `{ conflicts: [{ topic, house_status_value, taught_value, reason }] }` |
 
 `house_status` fields: `hoh`, `nominees` (string array), `veto_holder`, `veto_used` (bool),
-`have_nots` (string array), `feeds`, `timestamp`. **No `original_nominees`, `removed_nominee`, or
-`replacement_nominee` fields exist** — see "Missing capabilities" below.
+`have_nots` (string array), `feeds`, `timestamp`. **Automated, RSS-parser-driven, and never
+authoritative** — it is not the source of truth for any Discord command or for this dashboard's
+primary Game State display; it exists purely as a live, unverified observation for comparison
+against `official_state`. **No `original_nominees`, `removed_nominee`, or `replacement_nominee`
+fields exist** — see "Missing capabilities" below.
+
+`official_state` is the actual source of truth: every active STATE knowledge item, keyed by
+topic (e.g. `official_state.HOH`), each shaped like a `KnowledgeItem` (see Knowledge below). Set
+only via `/teach update` on Discord or this dashboard's Update State — never by automated
+live-feed parsing. This is what `/hoh`, `/nominees`, `/noms`, and `/veto` actually read.
+
+`conflicts[].reason` explicitly states the live feed is not authoritative — a conflict entry is a
+"the live feed may have new information worth manually confirming" signal, never a "two equal
+sources disagree, pick one" prompt.
 
 ## Knowledge
 
@@ -76,9 +96,12 @@ Discord — nothing is written by the `plan` calls.
 
 `text` uses the bot's own strict syntax — `FACT:`/`RULE:`/`STATE:` prefixes for batch,
 `TOPIC: value` for state updates. `line_numbers`, when given, restricts which previewed lines
-actually get written (the dashboard's select/deselect UI). Recognized state topics: `HOH`,
-`NOMINEES`, `VETO_WINNER`, `HAVE_NOTS` — anything else is still recorded as knowledge but never
-appears in `applied_topics` (it doesn't change live `house_status`).
+actually get written (the dashboard's select/deselect UI). `/api/v1/state/apply` writes only to
+`official_state` (KnowledgeStore) — it never touches `house_status`. Topics with a directly
+comparable `house_status` field for conflict-detection purposes: `HOH`, `NOMINEES`,
+`VETO_WINNER`, `HAVE_NOTS` (these are what `applied_topics` reports); any other topic (e.g.
+`EVICTED`, `VETO_USED`) is still recorded as an official fact the same way, it just has nothing
+to be diffed against in `/api/v1/conflicts`.
 
 ## Sources / Events / Diagnostics / Discord
 

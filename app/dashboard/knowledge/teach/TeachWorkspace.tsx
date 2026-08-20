@@ -94,7 +94,7 @@ export function TeachWorkspace({ initialMode }: { initialMode: Mode }) {
           ? `Taught ${result.data.written.length} item(s).`
           : `Updated ${result.data.written.length} item(s).${
               result.data.applied_topics?.length
-                ? ` Live state changed: ${result.data.applied_topics.join(", ")}.`
+                ? ` Official state changed: ${result.data.applied_topics.join(", ")}.`
                 : ""
             }`,
         "success",
@@ -113,8 +113,8 @@ export function TeachWorkspace({ initialMode }: { initialMode: Mode }) {
         title={mode === "batch" ? "Paste facts, rules, and state" : "Set current game state"}
         subtitle={
           mode === "batch"
-            ? "One FACT:, RULE:, or STATE: instruction per line. A STATE line here records taught knowledge but does not immediately change live Game State -- use Update State for that."
-            : 'One "TOPIC: value" per line, e.g. "HOH: Yash". Recognized topics (HOH, NOMINEES, VETO_WINNER, HAVE_NOTS) update live Game State immediately.'
+            ? "One FACT:, RULE:, or STATE: instruction per line. A STATE line here records taught knowledge but does not immediately change official Game State -- use Update State for that."
+            : 'One "TOPIC: value" per line, e.g. "HOH: Yash". These become Julie\'s official game facts immediately -- /hoh, /nominees, and /veto reflect them right away, and automated live-feed parsing can never overwrite what you set here.'
         }
       >
         <textarea
@@ -156,7 +156,7 @@ export function TeachWorkspace({ initialMode }: { initialMode: Mode }) {
           <p className="text-sm text-text-secondary">
             Wrote {applyResult.written.length} item(s).
             {applyResult.applied_topics && applyResult.applied_topics.length > 0 && (
-              <> Live state changed: {applyResult.applied_topics.join(", ")}.</>
+              <> Official state changed: {applyResult.applied_topics.join(", ")}.</>
             )}
           </p>
         </Card>

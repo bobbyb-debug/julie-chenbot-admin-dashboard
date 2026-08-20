@@ -35,9 +35,34 @@ export interface CompetitionSnapshot {
   ended_at: string | null;
 }
 
+// One official-facts STATE knowledge item, keyed by topic in
+// GameStateResponse.official_state below -- see admin_api/routes.py
+// game_state() in the bot repo. This is the actual source of truth
+// for HOH/nominees/veto/etc; house_status below is the automated,
+// unverified live-feed observation and must never be presented as
+// equally authoritative.
+export interface OfficialStateItem {
+  id: number;
+  type: "state";
+  content: string;
+  author_id: number;
+  created_at: string;
+  updated_at: string;
+  active: boolean;
+  supersedes: number | null;
+  topic: string;
+  note: string | null;
+}
+
 export interface GameStateResponse {
+  /** Automated, RSS-parser-driven observation -- UNVERIFIED, never
+   * authoritative. Only ever written by the bot's live-feed pipeline. */
   house_status: HouseStatusSnapshot;
   competition: CompetitionSnapshot;
+  /** Dashboard-confirmed official game facts, keyed by topic (e.g.
+   * "HOH", "NOMINEES", "VETO_WINNER", "HAVE_NOTS", or any other topic
+   * an admin has taught) -- the actual source of truth. */
+  official_state: Record<string, OfficialStateItem>;
 }
 
 export interface MonitorResultView {

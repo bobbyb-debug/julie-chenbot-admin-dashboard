@@ -108,7 +108,7 @@ export function attentionItems(
   const items: string[] = [];
 
   for (const conflict of conflicts) {
-    items.push(`Conflicting ${conflict.topic} information detected.`);
+    items.push(`Live feed disagrees with official ${conflict.topic} -- review in Game State.`);
   }
 
   for (const failed of failedMonitors) {
