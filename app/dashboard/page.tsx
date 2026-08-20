@@ -16,7 +16,8 @@ import { EmptyState, JulieOfflineState } from "@/components/EmptyState";
 import { julie } from "@/lib/julie-client";
 import { safeJulieCall } from "@/lib/safe-julie";
 import { attentionItems, buildComponentStatuses, overallStatus } from "@/lib/health-view";
-import { formatRelative, formatTimestamp } from "@/lib/format";
+import { formatRelative } from "@/lib/format";
+import { officialGameFacts, parseVetoUsed } from "@/lib/official-state";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +49,7 @@ export default async function OverviewPage() {
   const overall = overallStatus(health.engine, components, conflicts.conflicts, sources.monitors.failed_monitors.length);
   const attention = attentionItems(health.engine, conflicts.conflicts, sources.monitors.failed_monitors);
 
-  const houseStatus = gameState.house_status;
+  const { hoh, nominees, vetoWinner: veto, haveNots, vetoUsed } = officialGameFacts(gameState);
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,17 +80,18 @@ export default async function OverviewPage() {
       <section>
         <h2 className="mb-3 text-lg font-semibold text-text-primary">Current Game</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <GameCard label="Head of Household" value={houseStatus.hoh} />
-          <GameCard label="Nominees" value={houseStatus.nominees.join(", ")} />
+          <GameCard label="Head of Household" value={hoh?.content} />
+          <GameCard label="Nominees" value={nominees?.content} />
           <GameCard
             label="Power of Veto"
-            value={houseStatus.veto_holder}
-            hint={houseStatus.veto_holder ? (houseStatus.veto_used ? "Used" : "Not used") : undefined}
+            value={veto?.content}
+            hint={veto?.content ? formatVetoUsedHint(vetoUsed?.content) : undefined}
           />
-          <GameCard label="Have-Nots" value={houseStatus.have_nots.join(", ")} />
+          <GameCard label="Have-Nots" value={haveNots?.content} />
         </div>
         <p className="mt-2 text-xs text-text-muted">
-          Source: House Status monitor · as of {formatTimestamp(houseStatus.timestamp)}
+          Source: Official state, admin-confirmed via this dashboard -- never the automated
+          live feed.
         </p>
       </section>
 
@@ -241,13 +243,27 @@ function QuickAction({
   );
 }
 
-function GameCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
+/** Display wording for the veto card's hint -- the parsing itself
+ * (what counts as "used") lives in lib/official-state.ts parseVetoUsed(),
+ * shared with the Game State page. Returns undefined -- no hint at
+ * all -- when VETO_USED hasn't been taught, rather than guessing. */
+function formatVetoUsedHint(vetoUsedContent: string | undefined): string | undefined {
+  const used = parseVetoUsed(vetoUsedContent);
+  if (used === undefined) return undefined;
+  return used ? "Used" : "Not used";
+}
+
+function GameCard({ label, value, hint }: { label: string; value?: string; hint?: string }) {
   return (
     <div className="rounded-xl border border-border-subtle bg-bg-surface p-4">
       <div className="text-xs font-medium text-text-secondary">{label}</div>
-      <div className="mt-1 truncate text-lg font-semibold text-text-primary" title={value}>
-        {value || "—"}
-      </div>
+      {value ? (
+        <div className="mt-1 truncate text-lg font-semibold text-text-primary" title={value}>
+          {value}
+        </div>
+      ) : (
+        <div className="mt-1 text-lg font-semibold italic text-text-muted">Not confirmed yet</div>
+      )}
       {hint && <div className="mt-0.5 text-xs text-text-muted">{hint}</div>}
     </div>
   );

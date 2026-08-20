@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { formatRelative, formatTimestamp } from "@/lib/format";
 import { julie } from "@/lib/julie-client";
 import { safeJulieCall } from "@/lib/safe-julie";
+import { officialGameFacts, parseVetoUsed } from "@/lib/official-state";
 import type { OfficialStateItem } from "@/lib/julie-types";
 
 export const dynamic = "force-dynamic";
@@ -29,17 +30,12 @@ export default async function GameStatePage() {
   }
 
   const { gameState, conflicts, nomineeHistory, vetoHistory } = result.data;
-  const official = gameState.official_state ?? {};
   const house = gameState.house_status;
   const competition = gameState.competition;
 
-  const hoh = official["HOH"];
-  const nominees = official["NOMINEES"];
-  const veto = official["VETO_WINNER"];
-  const haveNots = official["HAVE_NOTS"];
-  const vetoUsed = official["VETO_USED"];
+  const { hoh, nominees, vetoWinner: veto, haveNots, vetoUsed } = officialGameFacts(gameState);
 
-  const otherTopics = Object.values(official).filter(
+  const otherTopics = Object.values(gameState.official_state ?? {}).filter(
     (item) => !PRIMARY_TOPICS.includes(item.topic) && item.topic !== "VETO_USED",
   );
 
@@ -177,10 +173,9 @@ export default async function GameStatePage() {
 }
 
 function formatUsedValue(content: string): string {
-  const normalized = content.trim().toLowerCase();
-  if (["yes", "true", "used"].includes(normalized)) return "Yes";
-  if (["no", "false"].includes(normalized)) return "No";
-  return content;
+  const used = parseVetoUsed(content);
+  if (used === undefined) return content;
+  return used ? "Yes" : "No";
 }
 
 function FieldHeader({ label, topic }: { label: string; topic: string }) {
