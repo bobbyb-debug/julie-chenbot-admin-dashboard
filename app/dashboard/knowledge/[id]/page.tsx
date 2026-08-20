@@ -8,7 +8,9 @@ import { formatTimestamp } from "@/lib/format";
 import { julie } from "@/lib/julie-client";
 import { hasRole } from "@/lib/rbac";
 import { safeJulieCall } from "@/lib/safe-julie";
+import { CorrectButton } from "../CorrectButton";
 import { DeactivateButton } from "./DeactivateButton";
+import { ReactivateButton } from "./ReactivateButton";
 
 export const dynamic = "force-dynamic";
 
@@ -55,12 +57,18 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
               </span>
             )}
           </div>
-          {canModerate && item.active && <DeactivateButton itemId={item.id} />}
-          {!item.active && (
-            <span className="rounded bg-status-problem/10 px-2 py-0.5 text-xs font-medium text-status-problem">
-              Deactivated
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {!item.active && (
+              <span className="rounded bg-status-problem/10 px-2 py-0.5 text-xs font-medium text-status-problem">
+                Deactivated
+              </span>
+            )}
+            {canModerate && item.active && item.type !== "state" && (
+              <CorrectButton itemId={item.id} originalContent={item.content} />
+            )}
+            {canModerate && item.active && <DeactivateButton itemId={item.id} />}
+            {canModerate && !item.active && <ReactivateButton itemId={item.id} />}
+          </div>
         </div>
 
         <p className="mt-4 text-lg text-text-primary">{item.content}</p>

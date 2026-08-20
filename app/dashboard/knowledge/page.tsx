@@ -7,6 +7,7 @@ import { formatTimestamp } from "@/lib/format";
 import { julie } from "@/lib/julie-client";
 import { hasRole } from "@/lib/rbac";
 import { safeJulieCall } from "@/lib/safe-julie";
+import { CorrectButton } from "./CorrectButton";
 
 export const dynamic = "force-dynamic";
 
@@ -97,10 +98,10 @@ export default async function KnowledgePage({
         ) : (
           <ul className="flex flex-col divide-y divide-border-subtle">
             {result.data.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} className="flex items-start gap-2 py-3 first:pt-0 last:pb-0">
                 <Link
                   href={`/dashboard/knowledge/${item.id}`}
-                  className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0 hover:bg-bg-hover -mx-2 px-2 rounded-lg"
+                  className="flex min-w-0 flex-1 items-start justify-between gap-4 -mx-2 rounded-lg px-2 py-1 hover:bg-bg-hover"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -123,6 +124,14 @@ export default async function KnowledgePage({
                   </div>
                   <span className="shrink-0 text-xs text-text-muted">{formatTimestamp(item.created_at)}</span>
                 </Link>
+                {/* Correct is only meaningful for prose knowledge (Fact/Rule/Correction) --
+                    States have their own dedicated Update State workflow (see the Game State
+                    page), which is what actually changes what /hoh etc. report. */}
+                {canTeach && item.active && item.type !== "state" && (
+                  <div className="shrink-0 pt-1">
+                    <CorrectButton itemId={item.id} originalContent={item.content} compact />
+                  </div>
+                )}
               </li>
             ))}
           </ul>
