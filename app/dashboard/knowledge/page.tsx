@@ -7,7 +7,10 @@ import { formatTimestamp } from "@/lib/format";
 import { julie } from "@/lib/julie-client";
 import { hasRole } from "@/lib/rbac";
 import { safeJulieCall } from "@/lib/safe-julie";
+import { visibleKnowledgeActions } from "@/lib/knowledge-actions";
 import { CorrectButton } from "./CorrectButton";
+import { DeactivateButton } from "./[id]/DeactivateButton";
+import { ReactivateButton } from "./[id]/ReactivateButton";
 
 export const dynamic = "force-dynamic";
 
@@ -97,43 +100,49 @@ export default async function KnowledgePage({
           <EmptyState title="No knowledge found" hint="Try a different filter, or teach Julie something new." />
         ) : (
           <ul className="flex flex-col divide-y divide-border-subtle">
-            {result.data.map((item) => (
-              <li key={item.id} className="flex items-start gap-2 py-3 first:pt-0 last:pb-0">
-                <Link
-                  href={`/dashboard/knowledge/${item.id}`}
-                  className="flex min-w-0 flex-1 items-start justify-between gap-4 -mx-2 rounded-lg px-2 py-1 hover:bg-bg-hover"
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-text-muted">#{item.id}</span>
-                      <KnowledgeTypeBadge type={item.type} />
-                      {item.topic && (
-                        <span className="rounded bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium text-text-muted">
-                          {item.topic}
-                        </span>
-                      )}
-                      {!item.active && (
-                        <span className="rounded bg-status-problem/10 px-1.5 py-0.5 text-[10px] font-medium text-status-problem">
-                          Deactivated
-                        </span>
-                      )}
+            {result.data.map((item) => {
+              const actions = visibleKnowledgeActions(item, canTeach);
+              const hasActions = actions.showCorrect || actions.showDeactivate || actions.showReactivate;
+
+              return (
+                <li key={item.id} className="flex items-start gap-2 py-3 first:pt-0 last:pb-0">
+                  <Link
+                    href={`/dashboard/knowledge/${item.id}`}
+                    className="flex min-w-0 flex-1 items-start justify-between gap-4 -mx-2 rounded-lg px-2 py-1 hover:bg-bg-hover"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-text-muted">#{item.id}</span>
+                        <KnowledgeTypeBadge type={item.type} />
+                        {item.topic && (
+                          <span className="rounded bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium text-text-muted">
+                            {item.topic}
+                          </span>
+                        )}
+                        {!item.active && (
+                          <span className="rounded bg-status-problem/10 px-1.5 py-0.5 text-[10px] font-medium text-status-problem">
+                            Deactivated
+                          </span>
+                        )}
+                      </div>
+                      <p className={`mt-1 truncate text-sm ${item.active ? "text-text-primary" : "text-text-muted line-through"}`}>
+                        {item.content}
+                      </p>
                     </div>
-                    <p className={`mt-1 truncate text-sm ${item.active ? "text-text-primary" : "text-text-muted line-through"}`}>
-                      {item.content}
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-xs text-text-muted">{formatTimestamp(item.created_at)}</span>
-                </Link>
-                {/* Correct is only meaningful for prose knowledge (Fact/Rule/Correction) --
-                    States have their own dedicated Update State workflow (see the Game State
-                    page), which is what actually changes what /hoh etc. report. */}
-                {canTeach && item.active && item.type !== "state" && (
-                  <div className="shrink-0 pt-1">
-                    <CorrectButton itemId={item.id} originalContent={item.content} compact />
-                  </div>
-                )}
-              </li>
-            ))}
+                    <span className="shrink-0 text-xs text-text-muted">{formatTimestamp(item.created_at)}</span>
+                  </Link>
+                  {hasActions && (
+                    <div className="flex shrink-0 items-center gap-1 pt-1">
+                      {actions.showCorrect && (
+                        <CorrectButton itemId={item.id} originalContent={item.content} compact />
+                      )}
+                      {actions.showDeactivate && <DeactivateButton itemId={item.id} compact />}
+                      {actions.showReactivate && <ReactivateButton itemId={item.id} compact />}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </Card>

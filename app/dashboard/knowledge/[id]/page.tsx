@@ -8,6 +8,7 @@ import { formatTimestamp } from "@/lib/format";
 import { julie } from "@/lib/julie-client";
 import { hasRole } from "@/lib/rbac";
 import { safeJulieCall } from "@/lib/safe-julie";
+import { visibleKnowledgeActions } from "@/lib/knowledge-actions";
 import { CorrectButton } from "../CorrectButton";
 import { DeactivateButton } from "./DeactivateButton";
 import { ReactivateButton } from "./ReactivateButton";
@@ -30,6 +31,7 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
   }
 
   const item = result.data;
+  const actions = visibleKnowledgeActions(item, canModerate);
 
   let supersededBy: number | null = null;
   if (item.active === false) {
@@ -63,11 +65,9 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
                 Deactivated
               </span>
             )}
-            {canModerate && item.active && item.type !== "state" && (
-              <CorrectButton itemId={item.id} originalContent={item.content} />
-            )}
-            {canModerate && item.active && <DeactivateButton itemId={item.id} />}
-            {canModerate && !item.active && <ReactivateButton itemId={item.id} />}
+            {actions.showCorrect && <CorrectButton itemId={item.id} originalContent={item.content} />}
+            {actions.showDeactivate && <DeactivateButton itemId={item.id} />}
+            {actions.showReactivate && <ReactivateButton itemId={item.id} />}
           </div>
         </div>
 
