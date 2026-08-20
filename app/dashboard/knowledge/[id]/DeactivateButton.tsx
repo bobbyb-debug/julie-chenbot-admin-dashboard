@@ -1,17 +1,34 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Ban } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/components/ToastProvider";
 import { forgetAction } from "../actions";
 
-export function DeactivateButton({ itemId }: { itemId: number }) {
+/** Deactivate trigger + confirmation -- identical implementation used
+ * from both the Knowledge list (compact) and a detail page (full). */
+export function DeactivateButton({
+  itemId,
+  compact = false,
+}: {
+  itemId: number;
+  compact?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const toast = useToast();
+
+  function openDialog(e: MouseEvent) {
+    // List rows wrap this button in a <Link> -- stop the click from
+    // also triggering navigation.
+    e.preventDefault();
+    e.stopPropagation();
+    setOpen(true);
+  }
 
   function confirm() {
     startTransition(async () => {
@@ -31,10 +48,16 @@ export function DeactivateButton({ itemId }: { itemId: number }) {
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
-        className="rounded-lg border border-status-problem/40 px-3 py-1.5 text-xs font-medium text-status-problem hover:bg-status-problem/10"
+        onClick={openDialog}
+        title="Deactivate this item"
+        aria-label={compact ? `Deactivate knowledge #${itemId}` : undefined}
+        className={
+          compact
+            ? "rounded-lg border border-border-default p-1.5 text-text-muted hover:border-status-problem/40 hover:text-status-problem"
+            : "rounded-lg border border-status-problem/40 px-3 py-1.5 text-xs font-medium text-status-problem hover:bg-status-problem/10"
+        }
       >
-        Deactivate
+        {compact ? <Ban size={13} aria-hidden /> : "Deactivate"}
       </button>
       <ConfirmDialog
         open={open}

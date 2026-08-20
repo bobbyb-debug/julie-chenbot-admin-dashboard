@@ -106,6 +106,10 @@ export const julie = {
     callJulie<{ id: number; forgotten: boolean }>(`/api/v1/knowledge/${id}/forget`, {
       method: "POST",
     }),
+  reactivateKnowledge: (id: number) =>
+    callJulie<{ id: number; reactivated: boolean }>(`/api/v1/knowledge/${id}/reactivate`, {
+      method: "POST",
+    }),
   stateWhy: (topic: string) =>
     callJulie<StateWhyResponse>(`/api/v1/state/${encodeURIComponent(topic)}/why`),
 

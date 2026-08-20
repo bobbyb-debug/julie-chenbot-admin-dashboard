@@ -70,6 +70,28 @@ export async function forgetAction(itemId: number): Promise<ActionResult> {
   }
 }
 
+export async function reactivateAction(itemId: number): Promise<ActionResult> {
+  const session = await requireSession("moderator");
+
+  try {
+    const result = await julie.reactivateKnowledge(itemId);
+    recordAudit(session, {
+      action: "reactivate_knowledge",
+      object: `knowledge#${itemId}`,
+      result: result.reactivated ? "success" : "failure",
+      detail: result.reactivated ? undefined : "already active or not found",
+    });
+    revalidatePath("/dashboard/knowledge");
+    revalidatePath(`/dashboard/knowledge/${itemId}`);
+    revalidatePath("/dashboard/game-state");
+    return { ok: result.reactivated };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to reactivate knowledge.";
+    recordAudit(session, { action: "reactivate_knowledge", object: `knowledge#${itemId}`, detail: message, result: "failure" });
+    return { ok: false, message };
+  }
+}
+
 export async function batchPlanAction(text: string): Promise<ActionResult<PlanResponse>> {
   await requireSession("moderator");
   try {
