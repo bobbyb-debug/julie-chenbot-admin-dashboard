@@ -11,6 +11,7 @@ import { formatRelative } from "@/lib/format";
 import { julie } from "@/lib/julie-client";
 import { safeJulieCall } from "@/lib/safe-julie";
 import { officialGameFacts, otherCurrentStateTopics, parseVetoUsed } from "@/lib/official-state";
+import { isCurrentTaughtRecord } from "@/lib/state-why-view";
 import type { OfficialStateItem } from "@/lib/julie-types";
 
 export const dynamic = "force-dynamic";
@@ -239,7 +240,7 @@ function NomineeTimeline({
   history,
   label,
 }: {
-  history: { id: number; content: string; created_at: string }[];
+  history: { id: number; content: string; created_at: string; active: boolean }[];
   label: string;
 }) {
   if (history.length <= 1) return null;
@@ -255,10 +256,10 @@ function NomineeTimeline({
         nomination followed by a veto replacement actually shows up.
       </p>
       <ol className="flex flex-col gap-1.5">
-        {history.map((item, i) => (
+        {history.map((item) => (
           <li key={item.id} className="flex items-baseline gap-2 text-sm">
             <Timestamp value={item.created_at} className="text-xs text-text-muted" />
-            <span className={i === history.length - 1 ? "font-medium text-text-primary" : "text-text-muted line-through"}>
+            <span className={isCurrentTaughtRecord(item) ? "font-medium text-text-primary" : "text-text-muted line-through"}>
               {item.content}
             </span>
           </li>

@@ -7,6 +7,7 @@ import { OfficialVsLiveFeed } from "@/components/OfficialVsLiveFeed";
 import { Timestamp } from "@/components/Timestamp";
 import { julie } from "@/lib/julie-client";
 import { safeJulieCall } from "@/lib/safe-julie";
+import { buildStateWhyView } from "@/lib/state-why-view";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +20,7 @@ export default async function WhyPage({ params }: { params: Promise<{ topic: str
   }
 
   const data = result.data;
-  const isConflict =
-    data.current_state != null &&
-    data.current_state.content.trim().toLowerCase() !== data.house_status_value.trim().toLowerCase();
+  const view = buildStateWhyView(data);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -34,36 +33,38 @@ export default async function WhyPage({ params }: { params: Promise<{ topic: str
         </h1>
       </div>
 
-      <Card title="Current State">
+      <Card title="Current Taught Value">
         <div className="text-2xl font-semibold text-text-primary">
-          {data.current_state?.content || data.house_status_value || "Not taught"}
+          {view.currentTaughtValue ?? "Not taught"}
         </div>
-        {data.current_state && (
+        {data.current_state ? (
           <p className="mt-2 text-sm text-text-secondary">
-            Source: Moderator-taught STATE ·{" "}
+            Source: Explicitly taught Knowledge ·{" "}
             <Link href={`/dashboard/knowledge/${data.current_state.id}`} className="text-accent-strong hover:underline">
               Knowledge #{data.current_state.id}
             </Link>{" "}
             · taught <Timestamp value={data.current_state.created_at} />
           </p>
-        )}
-        {!data.current_state && (
+        ) : (
           <p className="mt-2 text-sm text-text-muted">
-            No moderator has taught a STATE for this topic -- this value comes only from
-            automated sources (House Status).
+            No administrator has explicitly taught Julie a value for this topic yet.
           </p>
         )}
       </Card>
 
-      {isConflict && (
+      {view.showLiveFeed && (
         <Card
-          title="Live Feed Differs From Official State"
-          subtitle="Informational only -- the live feed never overrides an admin-confirmed value."
-          className="border-status-attention/40"
+          title={view.differs ? "Live Feed Differs From Taught Value" : "Live Feed Observation"}
+          subtitle={
+            view.differs
+              ? "Informational only -- the live feed never overrides taught Knowledge."
+              : "Automated, unverified -- shown for comparison, not because it's the reason Julie knows this."
+          }
+          className={view.differs ? "border-status-attention/40" : undefined}
         >
           <OfficialVsLiveFeed
-            officialValue={data.current_state?.content || "Not confirmed yet"}
-            liveFeedValue={data.house_status_value || "No observation"}
+            officialValue={view.currentTaughtValue ?? "Not taught"}
+            liveFeedValue={view.liveFeedValue!}
           />
         </Card>
       )}
@@ -81,6 +82,11 @@ export default async function WhyPage({ params }: { params: Promise<{ topic: str
                     <span className={`text-sm ${item.active ? "text-text-primary" : "text-text-muted line-through"}`}>
                       {item.content}
                     </span>
+                    {item.active && (
+                      <span className="rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-medium text-accent-strong">
+                        Current
+                      </span>
+                    )}
                   </div>
                   {item.note && <p className="mt-0.5 text-xs text-text-muted">Reason: {item.note}</p>}
                 </div>
