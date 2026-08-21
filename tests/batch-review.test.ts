@@ -118,6 +118,18 @@ test("a STATE line for a topic with no existing value is classified state_new", 
   assert.equal(review.previousValue, null);
 });
 
+test("a STATE line for a dedicated Official Game State topic (e.g. HOH) is flagged as a dedicated field", () => {
+  const lines = [planLine({ line_number: 1, type: "state", topic: "HOH", content: "Yash" })];
+  const [review] = reviewBatchLines(lines, []);
+  assert.equal(review.isDedicatedField, true);
+});
+
+test("a STATE line for a topic with no dedicated field (e.g. LAST_HOUSEGUEST_EVICTED) is not flagged as a dedicated field", () => {
+  const lines = [planLine({ line_number: 1, type: "state", topic: "LAST_HOUSEGUEST_EVICTED", content: "Kamu" })];
+  const [review] = reviewBatchLines(lines, []);
+  assert.equal(review.isDedicatedField, false);
+});
+
 test("a STATE line matching the current active value is classified state_unchanged", () => {
   const existing = [knowledgeItem({ id: 8, type: "state", topic: "HOH", content: "Yash" })];
   const lines = [planLine({ line_number: 1, type: "state", topic: "HOH", content: "Yash" })];

@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, BookOpen } from "lucide-react";
+import { ArrowLeft, BookOpen } from "lucide-react";
 import { Card } from "@/components/Card";
 import { EmptyState, JulieOfflineState } from "@/components/EmptyState";
-import { IconTitle } from "@/components/IconTitle";
 import { KnowledgeTypeBadge } from "@/components/KnowledgeTypeBadge";
+import { OfficialVsLiveFeed } from "@/components/OfficialVsLiveFeed";
 import { Timestamp } from "@/components/Timestamp";
 import { julie } from "@/lib/julie-client";
 import { safeJulieCall } from "@/lib/safe-julie";
@@ -56,11 +56,15 @@ export default async function WhyPage({ params }: { params: Promise<{ topic: str
       </Card>
 
       {isConflict && (
-        <Card title={<IconTitle icon={AlertTriangle}>Conflict</IconTitle>} className="border-status-attention/40">
-          <p className="text-sm text-text-secondary">
-            The taught STATE (<strong>{data.current_state?.content}</strong>) and the live
-            House Status value (<strong>{data.house_status_value || "(empty)"}</strong>) disagree.
-          </p>
+        <Card
+          title="Live Feed Differs From Official State"
+          subtitle="Informational only -- the live feed never overrides an admin-confirmed value."
+          className="border-status-attention/40"
+        >
+          <OfficialVsLiveFeed
+            officialValue={data.current_state?.content || "Not confirmed yet"}
+            liveFeedValue={data.house_status_value || "No observation"}
+          />
         </Card>
       )}
 

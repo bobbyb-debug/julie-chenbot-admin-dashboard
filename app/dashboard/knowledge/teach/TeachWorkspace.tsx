@@ -143,7 +143,7 @@ export function TeachWorkspace({ initialMode }: { initialMode: Mode }) {
         title={mode === "batch" ? "Paste facts, rules, and state" : "Set current game state"}
         subtitle={
           mode === "batch"
-            ? "One FACT:, RULE:, or STATE: instruction per line. A STATE line here records taught knowledge but does not immediately change official Game State -- use Update State for that."
+            ? "One FACT:, RULE:, or STATE: instruction per line -- a STATE line here takes effect immediately, same as Update State. Use Update State when you're only setting HOH, Nominees, Veto Winner, Veto Used, or Have-Nots; use Batch Teaching for a mixed paste of facts, rules, and state together."
             : 'One "TOPIC: value" per line, e.g. "HOH: Yash". These become Julie\'s official game facts immediately -- /hoh, /nominees, and /veto reflect them right away, and automated live-feed parsing can never overwrite what you set here.'
         }
       >
@@ -243,6 +243,13 @@ export function TeachWorkspace({ initialMode }: { initialMode: Mode }) {
                       {review?.previousValue !== undefined && review.previousValue !== null && (
                         <p className="mt-1 text-xs text-text-muted">
                           Current value: <span className="text-text-secondary">{review.previousValue}</span>
+                        </p>
+                      )}
+
+                      {mode === "batch" && review?.isDedicatedField && (
+                        <p className="mt-1 text-xs text-accent-strong">
+                          {line.topic} has a dedicated field on Update State -- this line takes effect
+                          immediately either way, Update State is just the more direct workflow for it.
                         </p>
                       )}
 

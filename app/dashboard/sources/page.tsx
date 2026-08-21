@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { Card } from "@/components/Card";
 import { IconTitle } from "@/components/IconTitle";
@@ -33,7 +34,14 @@ export default async function SourcesPage() {
     <div className="flex flex-col gap-5">
       <div>
         <h1 className="text-lg font-semibold text-text-primary">Sources</h1>
-        <p className="text-sm text-text-muted">Health of every automated source feeding Julie.</p>
+        <p className="text-sm text-text-muted">
+          Availability and health of every automated source feeding Julie&apos;s live-feed
+          observations -- not Official Game State, which only ever changes on{" "}
+          <Link href="/dashboard/game-state" className="text-accent-strong hover:underline">
+            Game State
+          </Link>
+          .
+        </p>
       </div>
 
       {monitors.failed_monitors.length > 0 && (
