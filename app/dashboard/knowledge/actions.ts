@@ -5,11 +5,31 @@ import { recordAudit } from "@/lib/audit";
 import { requireSession } from "@/lib/auth";
 import { julie, type CreateKnowledgeInput } from "@/lib/julie-client";
 import type { ApplyResponse, PlanResponse } from "@/lib/julie-types";
+import { reviewBatchLines, summarizeBatchReview, type BatchLineReview, type BatchReviewSummary } from "@/lib/batch-review";
 
 export interface ActionResult<T = undefined> {
   ok: boolean;
   message?: string;
   data?: T;
+}
+
+/** A batch/state plan enriched with a per-line duplicate/overlap/
+ * contradiction/state-change classification -- see lib/batch-review.ts.
+ * Computed entirely in the dashboard: the bot's own plan endpoints
+ * already return every existing STATE conflict, and GET
+ * /api/v1/knowledge already returns everything else reviewBatchLines()
+ * needs, so no bot-side change is required for this. */
+export interface BatchPreview {
+  plan: PlanResponse;
+  reviews: BatchLineReview[];
+  summary: BatchReviewSummary;
+}
+
+async function buildReview(plan: PlanResponse): Promise<BatchPreview> {
+  const existing = await julie.listKnowledge({ active: "true" });
+  const reviews = reviewBatchLines(plan.valid, existing);
+  const summary = summarizeBatchReview(reviews);
+  return { plan, reviews, summary };
 }
 
 export async function teachAction(input: {
@@ -92,11 +112,11 @@ export async function reactivateAction(itemId: number): Promise<ActionResult> {
   }
 }
 
-export async function batchPlanAction(text: string): Promise<ActionResult<PlanResponse>> {
+export async function batchPlanAction(text: string): Promise<ActionResult<BatchPreview>> {
   await requireSession("moderator");
   try {
     const plan = await julie.batchPlan(text);
-    return { ok: true, data: plan };
+    return { ok: true, data: await buildReview(plan) };
   } catch (error) {
     return { ok: false, message: error instanceof Error ? error.message : "Failed to build preview." };
   }
@@ -124,11 +144,11 @@ export async function batchApplyAction(
   }
 }
 
-export async function statePlanAction(text: string, reason?: string): Promise<ActionResult<PlanResponse>> {
+export async function statePlanAction(text: string, reason?: string): Promise<ActionResult<BatchPreview>> {
   await requireSession("moderator");
   try {
     const plan = await julie.statePlan(text, reason);
-    return { ok: true, data: plan };
+    return { ok: true, data: await buildReview(plan) };
   } catch (error) {
     return { ok: false, message: error instanceof Error ? error.message : "Failed to build preview." };
   }

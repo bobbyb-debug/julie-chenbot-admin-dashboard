@@ -4,7 +4,7 @@ import { Card } from "@/components/Card";
 import { EmptyState, JulieOfflineState } from "@/components/EmptyState";
 import { IconTitle } from "@/components/IconTitle";
 import { KnowledgeTypeBadge } from "@/components/KnowledgeTypeBadge";
-import { formatTimestamp } from "@/lib/format";
+import { Timestamp } from "@/components/Timestamp";
 import { julie } from "@/lib/julie-client";
 import { safeJulieCall } from "@/lib/safe-julie";
 
@@ -44,7 +44,7 @@ export default async function WhyPage({ params }: { params: Promise<{ topic: str
             <Link href={`/dashboard/knowledge/${data.current_state.id}`} className="text-accent-strong hover:underline">
               Knowledge #{data.current_state.id}
             </Link>{" "}
-            · taught {formatTimestamp(data.current_state.created_at)}
+            · taught <Timestamp value={data.current_state.created_at} />
           </p>
         )}
         {!data.current_state && (
@@ -80,7 +80,7 @@ export default async function WhyPage({ params }: { params: Promise<{ topic: str
                   </div>
                   {item.note && <p className="mt-0.5 text-xs text-text-muted">Reason: {item.note}</p>}
                 </div>
-                <span className="shrink-0 text-xs text-text-muted">{formatTimestamp(item.created_at)}</span>
+                <Timestamp value={item.created_at} className="shrink-0 text-xs text-text-muted" />
               </li>
             ))}
           </ul>

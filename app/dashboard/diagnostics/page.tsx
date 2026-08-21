@@ -4,7 +4,7 @@ import { EmptyState, JulieOfflineState } from "@/components/EmptyState";
 import { IconTitle } from "@/components/IconTitle";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { StatusBadge, type Status } from "@/components/StatusBadge";
-import { formatTimestamp } from "@/lib/format";
+import { Timestamp } from "@/components/Timestamp";
 import { julie } from "@/lib/julie-client";
 import { safeJulieCall } from "@/lib/safe-julie";
 
@@ -121,7 +121,7 @@ export default async function DiagnosticsPage() {
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <SeverityBadge severity={e.severity} />
-                  <span className="text-xs text-text-muted">{formatTimestamp(e.created_at)}</span>
+                  <Timestamp value={e.created_at} className="text-xs text-text-muted" />
                 </div>
               </li>
             ))}

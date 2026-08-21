@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/Card";
 import { EmptyState, JulieOfflineState } from "@/components/EmptyState";
 import { SeverityBadge } from "@/components/SeverityBadge";
-import { formatTimestamp } from "@/lib/format";
+import { Timestamp } from "@/components/Timestamp";
 import { julie } from "@/lib/julie-client";
 import { safeJulieCall } from "@/lib/safe-julie";
 
@@ -95,7 +95,7 @@ export default async function ActivityPage({
                     {event.source} · {event.delivered_to.length ? `→ #${event.delivered_to.join(", #")}` : "no destination recorded"}
                   </p>
                 </div>
-                <span className="shrink-0 text-xs text-text-muted">{formatTimestamp(event.created_at)}</span>
+                <Timestamp value={event.created_at} className="shrink-0 text-xs text-text-muted" />
               </li>
             ))}
           </ul>
