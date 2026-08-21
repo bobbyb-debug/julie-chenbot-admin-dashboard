@@ -1,10 +1,12 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { AlertTriangle, History, Radio, Search } from "lucide-react";
 import { Card } from "@/components/Card";
 import { IconTitle } from "@/components/IconTitle";
 import { JulieOfflineState } from "@/components/EmptyState";
 import { StatusBadge } from "@/components/StatusBadge";
-import { formatRelative, formatTimestamp } from "@/lib/format";
+import { Timestamp } from "@/components/Timestamp";
+import { formatRelative } from "@/lib/format";
 import { julie } from "@/lib/julie-client";
 import { safeJulieCall } from "@/lib/safe-julie";
 import { officialGameFacts, parseVetoUsed } from "@/lib/official-state";
@@ -150,8 +152,8 @@ export default async function GameStatePage() {
             badge={competition.active ? <StatusBadge status="attention" label="Active" /> : undefined}
           />
           <Field label="Winner" value={competition.winner || "—"} />
-          <Field label="Started" value={formatTimestamp(competition.started_at)} />
-          <Field label="Ended" value={formatTimestamp(competition.ended_at)} />
+          <Field label="Started" value={<Timestamp value={competition.started_at} />} />
+          <Field label="Ended" value={<Timestamp value={competition.ended_at} />} />
         </div>
       </Card>
 
@@ -242,7 +244,7 @@ function NomineeTimeline({
       <ol className="flex flex-col gap-1.5">
         {history.map((item, i) => (
           <li key={item.id} className="flex items-baseline gap-2 text-sm">
-            <span className="text-xs text-text-muted">{formatTimestamp(item.created_at)}</span>
+            <Timestamp value={item.created_at} className="text-xs text-text-muted" />
             <span className={i === history.length - 1 ? "font-medium text-text-primary" : "text-text-muted line-through"}>
               {item.content}
             </span>
@@ -253,7 +255,7 @@ function NomineeTimeline({
   );
 }
 
-function Field({ label, value, badge }: { label: string; value: string; badge?: React.ReactNode }) {
+function Field({ label, value, badge }: { label: string; value: ReactNode; badge?: ReactNode }) {
   return (
     <div>
       <div className="text-xs font-medium text-text-secondary">{label}</div>

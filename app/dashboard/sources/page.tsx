@@ -1,9 +1,10 @@
 import { AlertTriangle } from "lucide-react";
+import type { ReactNode } from "react";
 import { Card } from "@/components/Card";
 import { IconTitle } from "@/components/IconTitle";
 import { JulieOfflineState } from "@/components/EmptyState";
 import { StatusBadge, type Status } from "@/components/StatusBadge";
-import { formatTimestamp } from "@/lib/format";
+import { Timestamp } from "@/components/Timestamp";
 import { julie } from "@/lib/julie-client";
 import { safeJulieCall } from "@/lib/safe-julie";
 
@@ -51,7 +52,7 @@ export default async function SourcesPage() {
         <Card title="Joker's Updates" subtitle="Live feed RSS">
           <Row label="Feed State" value={rss.feed_state} />
           <Row label="Newest Item" value={rss.last_title || "—"} />
-          <Row label="Last Published" value={formatTimestamp(rss.last_published)} />
+          <Row label="Last Published" value={<Timestamp value={rss.last_published} />} />
           <Row label="Last GUID" value={rss.last_guid || "—"} mono />
         </Card>
 
@@ -107,11 +108,14 @@ export default async function SourcesPage() {
   );
 }
 
-function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function Row({ label, value, mono }: { label: string; value: ReactNode; mono?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-3 py-1 text-sm">
       <span className="text-text-muted">{label}</span>
-      <span className={`truncate text-right text-text-primary ${mono ? "font-mono text-xs" : ""}`} title={value}>
+      <span
+        className={`truncate text-right text-text-primary ${mono ? "font-mono text-xs" : ""}`}
+        title={typeof value === "string" ? value : undefined}
+      >
         {value}
       </span>
     </div>

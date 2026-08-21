@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { Card } from "@/components/Card";
 import { JulieOfflineState } from "@/components/EmptyState";
 import { KnowledgeTypeBadge } from "@/components/KnowledgeTypeBadge";
+import { Timestamp } from "@/components/Timestamp";
 import { getSession } from "@/lib/auth";
-import { formatTimestamp } from "@/lib/format";
 import { julie } from "@/lib/julie-client";
 import { hasRole } from "@/lib/rbac";
 import { safeJulieCall } from "@/lib/safe-julie";
@@ -87,11 +87,11 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
           </div>
           <div>
             <dt className="text-xs text-text-muted">Created</dt>
-            <dd className="text-text-primary">{formatTimestamp(item.created_at)}</dd>
+            <dd className="text-text-primary"><Timestamp value={item.created_at} /></dd>
           </div>
           <div>
             <dt className="text-xs text-text-muted">Updated</dt>
-            <dd className="text-text-primary">{formatTimestamp(item.updated_at)}</dd>
+            <dd className="text-text-primary"><Timestamp value={item.updated_at} /></dd>
           </div>
           {item.supersedes != null && (
             <div>
