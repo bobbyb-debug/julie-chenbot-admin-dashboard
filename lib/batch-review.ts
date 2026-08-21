@@ -1,5 +1,6 @@
 import type { KnowledgeItem, KnowledgeType, PlanLine } from "./julie-types.ts";
 import { classifyTextSimilarity, isLikelyContradiction } from "./knowledge-similarity.ts";
+import { isDedicatedStateTopic } from "./official-state.ts";
 
 /**
  * Classifies every valid line of a batch/state plan against existing
@@ -40,6 +41,16 @@ export interface BatchLineReview {
   score?: number;
   /** STATE lines only: the topic's current active value, or null if the topic has never been taught. */
   previousValue?: string | null;
+  /** STATE lines only: true when the topic has a dedicated Official
+   * Game State field (HOH, NOMINEES, VETO_WINNER, VETO_USED,
+   * HAVE_NOTS -- see lib/official-state.ts). Writing this line here
+   * in Batch Teaching has the exact same effect on Official Game
+   * State as writing it in Update State (both go through the same
+   * KnowledgeStore.teach() auto-supersede-by-topic mechanism); this
+   * only flags the line so the review UI can point out that Update
+   * State is the more direct workflow for it, never that the line
+   * "won't count" if applied here. */
+  isDedicatedField?: boolean;
 }
 
 export interface BatchReviewSummary {
@@ -89,13 +100,14 @@ export function reviewBatchLines(
   for (const line of lines) {
     if (line.type === "state" && line.topic) {
       const previousValue = activeStateByTopic.get(line.topic) ?? null;
+      const isDedicatedField = isDedicatedStateTopic(line.topic);
 
       if (previousValue === null) {
-        reviews.push({ line_number: line.line_number, classification: "state_new", previousValue: null });
+        reviews.push({ line_number: line.line_number, classification: "state_new", previousValue: null, isDedicatedField });
       } else if (previousValue === line.content) {
-        reviews.push({ line_number: line.line_number, classification: "state_unchanged", previousValue });
+        reviews.push({ line_number: line.line_number, classification: "state_unchanged", previousValue, isDedicatedField });
       } else {
-        reviews.push({ line_number: line.line_number, classification: "state_update", previousValue });
+        reviews.push({ line_number: line.line_number, classification: "state_update", previousValue, isDedicatedField });
       }
 
       activeStateByTopic.set(line.topic, line.content);

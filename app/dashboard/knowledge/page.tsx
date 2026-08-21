@@ -9,7 +9,8 @@ import { julie } from "@/lib/julie-client";
 import { hasRole } from "@/lib/rbac";
 import { safeJulieCall } from "@/lib/safe-julie";
 import { visibleKnowledgeActions } from "@/lib/knowledge-actions";
-import { officialGameFacts, parseVetoUsed } from "@/lib/official-state";
+import { activeQueryValue, resolveActiveFilter, type ActiveFilter } from "@/lib/knowledge-filters";
+import { activeStateRole, officialGameFacts, otherCurrentStateTopics, parseVetoUsed } from "@/lib/official-state";
 import type { GameStateResponse, OfficialStateItem } from "@/lib/julie-types";
 import { CorrectButton } from "./CorrectButton";
 import { DeactivateButton } from "./[id]/DeactivateButton";
@@ -38,9 +39,15 @@ export default async function KnowledgePage({
   const session = await getSession();
   const canTeach = session ? hasRole(session.role, "moderator") : false;
 
+  // Defaults to "Active" (not "All"): the normal view should
+  // emphasize current active knowledge, with the full history still
+  // one click away via the filter below -- see lib/knowledge-filters.ts.
+  const activeFilter = resolveActiveFilter(params.active);
+
   const query: Record<string, string> = {};
   if (params.type && params.type !== "all") query.type = params.type;
-  if (params.active) query.active = params.active;
+  const activeQuery = activeQueryValue(activeFilter);
+  if (activeQuery) query.active = activeQuery;
 
   const [result, gameState] = await Promise.all([
     safeJulieCall(() => julie.listKnowledge(query)),
@@ -75,7 +82,7 @@ export default async function KnowledgePage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-lg font-semibold text-text-primary">Knowledge Center</h1>
-          <p className="text-sm text-text-muted">What Julie has been explicitly taught.</p>
+          <p className="text-sm text-text-muted">What Julie currently knows -- and everything she&apos;s ever been taught.</p>
         </div>
         {canTeach && (
           <Link
@@ -108,7 +115,7 @@ export default async function KnowledgePage({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <StatusToggle params={params} />
+          <StatusToggle params={params} activeFilter={activeFilter} />
           <form action="/dashboard/knowledge" className="flex w-full items-center gap-2 sm:w-auto">
             {params.type && <input type="hidden" name="type" value={params.type} />}
             {params.active && <input type="hidden" name="active" value={params.active} />}
@@ -130,7 +137,13 @@ export default async function KnowledgePage({
         ) : total === 0 ? (
           <EmptyState
             title="No knowledge found"
-            hint={params.q ? `Nothing matches "${params.q}". Try a different search or filter.` : "Try a different filter, or teach Julie something new."}
+            hint={
+              params.q
+                ? `Nothing matches "${params.q}". Try a different search or filter.`
+                : activeFilter === "true"
+                  ? "No active knowledge matches this filter. Check Deactivated, or teach Julie something new."
+                  : "Try a different filter, or teach Julie something new."
+            }
           />
         ) : (
           <>
@@ -138,6 +151,7 @@ export default async function KnowledgePage({
               {pageItems.map((item) => {
                 const actions = visibleKnowledgeActions(item, canTeach);
                 const hasActions = actions.showCorrect || actions.showDeactivate || actions.showReactivate;
+                const role = activeStateRole(item);
 
                 return (
                   <li key={item.id} className="flex items-start gap-2 py-3 first:pt-0 last:pb-0">
@@ -146,12 +160,28 @@ export default async function KnowledgePage({
                       className="flex min-w-0 flex-1 items-start justify-between gap-4 -mx-2 rounded-lg px-2 py-1 hover:bg-bg-hover"
                     >
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="text-xs text-text-muted">#{item.id}</span>
                           <KnowledgeTypeBadge type={item.type} />
                           {item.topic && (
                             <span className="rounded bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium text-text-muted">
                               {item.topic}
+                            </span>
+                          )}
+                          {role === "official" && (
+                            <span
+                              className="rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-medium text-accent-strong"
+                              title="This is the current value shown in Current Game State above."
+                            >
+                              Official
+                            </span>
+                          )}
+                          {role === "current" && (
+                            <span
+                              className="rounded-full bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium text-text-secondary"
+                              title="This is the current admin-confirmed value for this topic."
+                            >
+                              Current
                             </span>
                           )}
                           {!item.active && (
@@ -196,13 +226,9 @@ export default async function KnowledgePage({
   );
 }
 
-const PRIMARY_STATE_TOPICS = ["HOH", "NOMINEES", "VETO_WINNER", "VETO_USED", "HAVE_NOTS"];
-
 function CurrentStatePanel({ gameState }: { gameState: GameStateResponse }) {
   const { hoh, nominees, vetoWinner, vetoUsed, haveNots } = officialGameFacts(gameState);
-  const otherTopics = Object.values(gameState.official_state ?? {}).filter(
-    (item) => !PRIMARY_STATE_TOPICS.includes(item.topic),
-  );
+  const otherTopics = otherCurrentStateTopics(gameState);
 
   const usedParsed = parseVetoUsed(vetoUsed?.content);
   const fields: { label: string; item: OfficialStateItem | undefined; display?: string }[] = [
@@ -211,7 +237,6 @@ function CurrentStatePanel({ gameState }: { gameState: GameStateResponse }) {
     { label: "Veto Winner", item: vetoWinner },
     { label: "Veto Used", item: vetoUsed, display: usedParsed === undefined ? undefined : usedParsed ? "Yes" : "No" },
     { label: "Have-Nots", item: haveNots },
-    ...otherTopics.map((item) => ({ label: item.topic.replace(/_/g, " "), item })),
   ];
 
   return (
@@ -239,11 +264,27 @@ function CurrentStatePanel({ gameState }: { gameState: GameStateResponse }) {
                 <div className="mt-0.5 text-[10px] text-text-muted">Set {formatRelative(f.item.updated_at)}</div>
               </>
             ) : (
-              <div className="mt-1 text-sm italic text-text-muted">Not set</div>
+              <div className="mt-1 text-sm italic text-text-muted">Not confirmed yet</div>
             )}
           </div>
         ))}
       </div>
+
+      {otherTopics.length > 0 && (
+        <div className="mt-4 border-t border-border-subtle pt-3">
+          <p className="mb-2 text-xs font-medium text-text-secondary">
+            Other current state -- no dedicated field of its own
+          </p>
+          <ul className="flex flex-col gap-1.5">
+            {otherTopics.map((item) => (
+              <li key={item.topic} className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
+                <span className="shrink-0 font-medium text-text-primary">{item.topic.replace(/_/g, " ")}</span>
+                <span className="min-w-0 text-right text-text-secondary">{item.content}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </Card>
   );
 }
@@ -340,29 +381,29 @@ function buildHref(params: KnowledgeSearchParams, overrides: Partial<KnowledgeSe
   return `/dashboard/knowledge${qs ? `?${qs}` : ""}`;
 }
 
-function StatusToggle({ params }: { params: KnowledgeSearchParams }) {
-  const options: { key: string | undefined; label: string }[] = [
-    { key: undefined, label: "All" },
-    { key: "true", label: "Active" },
-    { key: "false", label: "Deactivated" },
+function StatusToggle({ params, activeFilter }: { params: KnowledgeSearchParams; activeFilter: ActiveFilter }) {
+  // "Active" is the default -- selecting it clears the URL param
+  // entirely (matches resolveActiveFilter()'s default), so the
+  // normal/no-filter URL is the clean one.
+  const options: { key: ActiveFilter; label: string; hrefValue: string | undefined }[] = [
+    { key: "true", label: "Active", hrefValue: undefined },
+    { key: "all", label: "All", hrefValue: "all" },
+    { key: "false", label: "Deactivated", hrefValue: "false" },
   ];
 
   return (
     <div className="flex flex-wrap gap-1 rounded-lg border border-border-subtle bg-bg-surface p-1">
-      {options.map((opt) => {
-        const active = (params.active ?? undefined) === opt.key;
-        return (
-          <Link
-            key={opt.label}
-            href={buildHref(params, { active: opt.key, page: undefined })}
-            className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
-              active ? "bg-accent/20 text-accent-strong" : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            {opt.label}
-          </Link>
-        );
-      })}
+      {options.map((opt) => (
+        <Link
+          key={opt.key}
+          href={buildHref(params, { active: opt.hrefValue, page: undefined })}
+          className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
+            activeFilter === opt.key ? "bg-accent/20 text-accent-strong" : "text-text-secondary hover:text-text-primary"
+          }`}
+        >
+          {opt.label}
+        </Link>
+      ))}
     </div>
   );
 }

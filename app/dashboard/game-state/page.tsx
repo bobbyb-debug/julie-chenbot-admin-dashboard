@@ -1,20 +1,19 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { AlertTriangle, History, Radio, Search } from "lucide-react";
+import { History, Radio, Search } from "lucide-react";
 import { Card } from "@/components/Card";
 import { IconTitle } from "@/components/IconTitle";
 import { JulieOfflineState } from "@/components/EmptyState";
+import { OfficialVsLiveFeed } from "@/components/OfficialVsLiveFeed";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Timestamp } from "@/components/Timestamp";
 import { formatRelative } from "@/lib/format";
 import { julie } from "@/lib/julie-client";
 import { safeJulieCall } from "@/lib/safe-julie";
-import { officialGameFacts, parseVetoUsed } from "@/lib/official-state";
+import { officialGameFacts, otherCurrentStateTopics, parseVetoUsed } from "@/lib/official-state";
 import type { OfficialStateItem } from "@/lib/julie-types";
 
 export const dynamic = "force-dynamic";
-
-const PRIMARY_TOPICS = ["HOH", "NOMINEES", "VETO_WINNER", "HAVE_NOTS"];
 
 export default async function GameStatePage() {
   const result = await safeJulieCall(async () => {
@@ -36,10 +35,7 @@ export default async function GameStatePage() {
   const competition = gameState.competition;
 
   const { hoh, nominees, vetoWinner: veto, haveNots, vetoUsed } = officialGameFacts(gameState);
-
-  const otherTopics = Object.values(gameState.official_state ?? {}).filter(
-    (item) => !PRIMARY_TOPICS.includes(item.topic) && item.topic !== "VETO_USED",
-  );
+  const otherTopics = otherCurrentStateTopics(gameState);
 
   return (
     <div className="flex flex-col gap-6">
@@ -58,18 +54,22 @@ export default async function GameStatePage() {
 
       {conflicts.conflicts.length > 0 && (
         <Card
-          title={<IconTitle icon={AlertTriangle}>Live Feed vs. Official State</IconTitle>}
-          subtitle="The live feed is never authoritative -- these are signals to review, not disagreements between equal sources."
+          title="Live Feed Differs From Official State"
+          subtitle="Informational only -- the live feed never overrides an admin-confirmed value."
           className="border-status-attention/40"
         >
           <ul className="flex flex-col gap-3">
             {conflicts.conflicts.map((conflict) => (
-              <li key={conflict.topic} className="text-sm">
-                <span className="font-medium text-status-attention">{conflict.topic}</span>
-                <span className="text-text-secondary"> — {conflict.reason}</span>
-                <div className="mt-1 flex gap-4 text-xs text-text-muted">
-                  <span>Live feed (unverified): {conflict.house_status_value || "(empty)"}</span>
-                  <span>Official (dashboard): {conflict.taught_value || "(not set)"}</span>
+              <li key={conflict.topic} className="rounded-lg border border-border-subtle p-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                  <span className="font-medium text-text-primary">{conflict.topic.replace(/_/g, " ")}</span>
+                  <span className="text-xs text-text-muted">{conflict.reason}</span>
+                </div>
+                <div className="mt-2">
+                  <OfficialVsLiveFeed
+                    officialValue={conflict.taught_value || "Not confirmed yet"}
+                    liveFeedValue={conflict.house_status_value || "No observation"}
+                  />
                 </div>
               </li>
             ))}
@@ -129,7 +129,10 @@ export default async function GameStatePage() {
       </Card>
 
       {otherTopics.length > 0 && (
-        <Card title="Other Official Facts">
+        <Card
+          title="Other Current State"
+          subtitle="Admin-confirmed current values with no dedicated field of their own."
+        >
           <ul className="flex flex-col gap-2">
             {otherTopics.map((item) => (
               <li key={item.topic} className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
@@ -143,17 +146,27 @@ export default async function GameStatePage() {
         </Card>
       )}
 
-      <Card title="Competition">
+      <Card
+        title={competition.active ? "Competition In Progress" : "Recent Competition"}
+        subtitle={
+          competition.active
+            ? undefined
+            : "Historical result -- does not by itself change who the current HOH, nominees, or veto holder are."
+        }
+      >
         <div className="flex flex-wrap items-center gap-6">
-          <Field label="Type" value={competition.competition} />
-          <Field
-            label="Status"
-            value={competition.active ? "In progress" : "Not active"}
-            badge={competition.active ? <StatusBadge status="attention" label="Active" /> : undefined}
-          />
-          <Field label="Winner" value={competition.winner || "—"} />
-          <Field label="Started" value={<Timestamp value={competition.started_at} />} />
-          <Field label="Ended" value={<Timestamp value={competition.ended_at} />} />
+          <Field label="Competition" value={competition.competition || "—"} />
+          {competition.active ? (
+            <>
+              <Field label="Status" value="In progress" badge={<StatusBadge status="attention" label="Active" />} />
+              <Field label="Started" value={<Timestamp value={competition.started_at} />} />
+            </>
+          ) : (
+            <>
+              <Field label="Winner" value={competition.winner || "—"} />
+              <Field label="Completed" value={<Timestamp value={competition.ended_at} />} />
+            </>
+          )}
         </div>
       </Card>
 

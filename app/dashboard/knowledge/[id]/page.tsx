@@ -9,6 +9,8 @@ import { julie } from "@/lib/julie-client";
 import { hasRole } from "@/lib/rbac";
 import { safeJulieCall } from "@/lib/safe-julie";
 import { visibleKnowledgeActions } from "@/lib/knowledge-actions";
+import { activeStateRole } from "@/lib/official-state";
+import type { KnowledgeItem } from "@/lib/julie-types";
 import { CorrectButton } from "../CorrectButton";
 import { DeactivateButton } from "./DeactivateButton";
 import { ReactivateButton } from "./ReactivateButton";
@@ -32,6 +34,8 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
 
   const item = result.data;
   const actions = visibleKnowledgeActions(item, canModerate);
+  const role = activeStateRole(item);
+  const status = statusLine(item, role);
 
   let supersededBy: number | null = null;
   if (item.active === false) {
@@ -72,6 +76,12 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
         </div>
 
         <p className="mt-4 text-lg text-text-primary">{item.content}</p>
+
+        {status && (
+          <p className={`mt-2 text-xs font-medium ${role === "official" ? "text-accent-strong" : "text-text-muted"}`}>
+            {status}
+          </p>
+        )}
 
         {item.note && (
           <p className="mt-2 text-sm text-text-secondary">
@@ -126,4 +136,25 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
       )}
     </div>
   );
+}
+
+/** One-line context for what this record actually is, derived only
+ * from fields the API already returns (type/active/topic/supersedes)
+ * -- never invented. See lib/official-state.ts activeStateRole() for
+ * how "official" vs. "current" is decided. */
+function statusLine(item: KnowledgeItem, role: "official" | "current" | null): string | null {
+  if (item.type === "state" && item.topic) {
+    if (item.active) {
+      return role === "official"
+        ? `Current official value for ${item.topic}.`
+        : `Current admin-confirmed value for ${item.topic} -- no dedicated field.`;
+    }
+    return `No longer the current value for ${item.topic} -- kept for history.`;
+  }
+
+  if (item.type === "correction") {
+    return item.supersedes != null ? "Correction -- supersedes the record below." : "Correction.";
+  }
+
+  return null;
 }
