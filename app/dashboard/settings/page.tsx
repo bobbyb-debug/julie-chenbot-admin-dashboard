@@ -49,7 +49,7 @@ export default async function SettingsPage() {
           <ul className="flex flex-col divide-y divide-border-subtle">
             {audit.map((entry) => (
               <li key={entry.id} className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0 text-sm">
-                <div>
+                <div className="min-w-0">
                   <span className="font-medium text-text-primary">{entry.actor_email}</span>{" "}
                   <span className="text-text-secondary">{entry.action.replace(/_/g, " ")}</span>
                   {entry.object && <span className="text-text-muted"> · {entry.object}</span>}
@@ -72,9 +72,9 @@ export default async function SettingsPage() {
 
 function ConfigRow({ name, ok }: { name: string; ok: boolean }) {
   return (
-    <li className="flex items-center justify-between">
-      <span className="font-mono text-xs text-text-secondary">{name}</span>
-      <span className={ok ? "text-status-healthy" : "text-status-problem"}>{ok ? "✓ Set" : "✕ Missing"}</span>
+    <li className="flex items-center justify-between gap-3">
+      <span className="min-w-0 font-mono text-xs text-text-secondary">{name}</span>
+      <span className={`shrink-0 ${ok ? "text-status-healthy" : "text-status-problem"}`}>{ok ? "✓ Set" : "✕ Missing"}</span>
     </li>
   );
 }

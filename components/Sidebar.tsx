@@ -11,9 +11,11 @@ import {
   Settings,
   Sparkles,
   Wrench,
+  X,
 } from "lucide-react";
 import { ROLE_LABELS } from "@/lib/rbac";
 import type { Role } from "@/lib/session";
+import { useMobileNav } from "./MobileNavProvider";
 
 const NAV = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -38,53 +40,81 @@ export function Sidebar({
   environment: string;
 }) {
   const pathname = usePathname();
+  const { open, setOpen } = useMobileNav();
 
   return (
-    <nav className="flex h-full w-56 shrink-0 flex-col border-r border-border-subtle bg-bg-surface p-3">
-      <div className="mb-4 px-2 pt-2">
-        <div className="text-sm font-semibold uppercase tracking-wide text-text-primary">
-          Julie ChenBot
-        </div>
-        <div className="text-[11px] font-medium uppercase tracking-widest text-accent-strong">
-          Admin Control Room
-        </div>
-      </div>
+    <>
+      {/* Backdrop -- mobile only, only while the drawer is open. The
+          sidebar itself is always in the DOM (position: fixed on
+          mobile, static at md+) so it never affects the flex layout
+          of the row it sits in (see app/dashboard/layout.tsx). */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 md:hidden"
+          onClick={() => setOpen(false)}
+          aria-hidden
+        />
+      )}
 
-      <div className="flex flex-1 flex-col gap-1">
-        {NAV.map((item) => {
-          const active =
-            item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition ${
-                active
-                  ? "bg-accent/15 font-medium text-accent-strong"
-                  : "text-text-secondary hover:bg-bg-hover hover:text-text-primary"
-              }`}
-            >
-              <Icon size={16} strokeWidth={2} aria-hidden />
-              {item.label}
-            </Link>
-          );
-        })}
-      </div>
+      <nav
+        className={`fixed inset-y-0 z-50 flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r border-border-subtle bg-bg-surface p-3 transition-[left] duration-200 ease-out md:static md:left-0 md:z-auto md:w-56 ${
+          open ? "left-0" : "-left-64"
+        }`}
+      >
+        <div className="mb-4 flex items-start justify-between gap-2 px-2 pt-2">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold uppercase tracking-wide text-text-primary">
+              Julie ChenBot
+            </div>
+            <div className="text-[11px] font-medium uppercase tracking-widest text-accent-strong">
+              Admin Control Room
+            </div>
+          </div>
+          <button
+            onClick={() => setOpen(false)}
+            aria-label="Close navigation menu"
+            className="shrink-0 rounded-lg p-1 text-text-muted hover:bg-bg-hover hover:text-text-primary md:hidden"
+          >
+            <X size={16} aria-hidden />
+          </button>
+        </div>
 
-      <div className="flex flex-col gap-2 border-t border-border-subtle pt-3 text-xs">
-        <StatusRow label="API" ok={julieOnline} />
-        <StatusRow label="Bot" ok={engineRunning} />
-        <div className="flex items-center justify-between px-2 text-text-muted">
-          <span>Environment</span>
-          <span className="font-mono text-[11px] text-text-secondary">{environment}</span>
+        <div className="flex flex-1 flex-col gap-1">
+          {NAV.map((item) => {
+            const active =
+              item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition ${
+                  active
+                    ? "bg-accent/15 font-medium text-accent-strong"
+                    : "text-text-secondary hover:bg-bg-hover hover:text-text-primary"
+                }`}
+              >
+                <Icon size={16} strokeWidth={2} aria-hidden />
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
-        <div className="flex items-center justify-between px-2 text-text-muted">
-          <span>Role</span>
-          <span className="text-text-secondary">{ROLE_LABELS[role]}</span>
+
+        <div className="flex flex-col gap-2 border-t border-border-subtle pt-3 text-xs">
+          <StatusRow label="API" ok={julieOnline} />
+          <StatusRow label="Bot" ok={engineRunning} />
+          <div className="flex items-center justify-between px-2 text-text-muted">
+            <span>Environment</span>
+            <span className="font-mono text-[11px] text-text-secondary">{environment}</span>
+          </div>
+          <div className="flex items-center justify-between px-2 text-text-muted">
+            <span>Role</span>
+            <span className="text-text-secondary">{ROLE_LABELS[role]}</span>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 }
 

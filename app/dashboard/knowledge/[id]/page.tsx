@@ -49,8 +49,8 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
       </Link>
 
       <Card>
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm text-text-muted">#{item.id}</span>
             <KnowledgeTypeBadge type={item.type} />
             {item.topic && (
@@ -59,7 +59,7 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {!item.active && (
               <span className="rounded bg-status-problem/10 px-2 py-0.5 text-xs font-medium text-status-problem">
                 Deactivated

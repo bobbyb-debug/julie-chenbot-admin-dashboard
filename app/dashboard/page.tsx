@@ -54,14 +54,14 @@ export default async function OverviewPage() {
   return (
     <div className="flex flex-col gap-6">
       <section>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-lg font-semibold text-text-primary">System Status</h1>
           <StatusBadge status={overall} />
         </div>
         <Card>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {components.map((component) => (
-              <div key={component.name} className="rounded-lg border border-border-subtle p-3">
+              <div key={component.name} className="min-w-0 rounded-lg border border-border-subtle p-3">
                 <div className="mb-1 text-xs font-medium text-text-secondary">{component.name}</div>
                 <StatusBadge status={component.status} />
                 <p className="mt-1.5 line-clamp-2 text-xs text-text-muted" title={component.detail}>
@@ -116,7 +116,7 @@ export default async function OverviewPage() {
       </section>
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-text-primary">Recent Activity</h2>
           <Link href="/dashboard/activity" className="text-xs text-accent-strong hover:underline">
             View all →
@@ -129,8 +129,8 @@ export default async function OverviewPage() {
             <ul className="flex flex-col divide-y divide-border-subtle">
               {events.map((event, i) => (
                 <li key={i} className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
-                  <div className="flex flex-col gap-0.5">
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-medium text-text-primary">{event.title}</span>
                       <SeverityBadge severity={event.severity} />
                     </div>
@@ -147,7 +147,7 @@ export default async function OverviewPage() {
       </section>
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-text-primary">Source Health</h2>
           <Link href="/dashboard/sources" className="text-xs text-accent-strong hover:underline">
             View all →
@@ -255,7 +255,7 @@ function formatVetoUsedHint(vetoUsedContent: string | undefined): string | undef
 
 function GameCard({ label, value, hint }: { label: string; value?: string; hint?: string }) {
   return (
-    <div className="rounded-xl border border-border-subtle bg-bg-surface p-4">
+    <div className="min-w-0 rounded-xl border border-border-subtle bg-bg-surface p-4">
       <div className="text-xs font-medium text-text-secondary">{label}</div>
       {value ? (
         <div className="mt-1 truncate text-lg font-semibold text-text-primary" title={value}>

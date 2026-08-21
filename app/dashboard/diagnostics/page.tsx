@@ -39,8 +39,8 @@ export default async function DiagnosticsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-lg font-semibold text-text-primary">Diagnostics</h1>
           <p className="text-sm text-text-muted">Real troubleshooting data, straight from the engine.</p>
         </div>
@@ -79,7 +79,7 @@ export default async function DiagnosticsPage() {
           ) : (
             health.monitors.map((m) => (
               <li key={m.monitor} className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
-                <div>
+                <div className="min-w-0">
                   <span className="text-sm text-text-primary">{m.monitor}</span>
                   <p className="text-xs text-text-muted">{m.detail}</p>
                 </div>
@@ -100,7 +100,7 @@ export default async function DiagnosticsPage() {
           <ul className="flex flex-col divide-y divide-border-subtle">
             {pending_events.map((e, i) => (
               <li key={i} className="flex items-center justify-between gap-3 py-2 text-sm">
-                <span className="text-text-primary">{e.title}</span>
+                <span className="min-w-0 truncate text-text-primary">{e.title}</span>
                 <SeverityBadge severity={e.severity} />
               </li>
             ))}
@@ -115,7 +115,7 @@ export default async function DiagnosticsPage() {
           <ul className="flex flex-col divide-y divide-border-subtle">
             {recent_warnings.map((e, i) => (
               <li key={i} className="flex items-center justify-between gap-3 py-2">
-                <div>
+                <div className="min-w-0">
                   <span className="text-sm text-text-primary">{e.title}</span>
                   <p className="text-xs text-text-muted">{e.detail}</p>
                 </div>
@@ -152,9 +152,11 @@ export default async function DiagnosticsPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border-subtle bg-bg-surface p-4">
+    <div className="min-w-0 rounded-xl border border-border-subtle bg-bg-surface p-4">
       <div className="text-xs font-medium text-text-secondary">{label}</div>
-      <div className="mt-1 text-lg font-semibold text-text-primary">{value}</div>
+      <div className="mt-1 truncate text-lg font-semibold text-text-primary" title={value}>
+        {value}
+      </div>
     </div>
   );
 }

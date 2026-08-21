@@ -27,9 +27,9 @@ export default async function DiscordPage() {
       <Card title="Channels">
         <ul className="flex flex-col divide-y divide-border-subtle">
           {Object.entries(channels).map(([name, info]) => (
-            <li key={name} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0 text-sm">
-              <span className="text-text-primary">{info.channel}</span>
-              <span className={info.configured ? "text-status-healthy" : "text-text-muted"}>
+            <li key={name} className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0 text-sm">
+              <span className="min-w-0 truncate text-text-primary">{info.channel}</span>
+              <span className={`shrink-0 ${info.configured ? "text-status-healthy" : "text-text-muted"}`}>
                 {info.configured ? `ID ${info.channel_id}` : "Not configured"}
               </span>
             </li>
