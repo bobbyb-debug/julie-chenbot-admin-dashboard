@@ -111,9 +111,9 @@ export default async function SourcesPage() {
 function Row({ label, value, mono }: { label: string; value: ReactNode; mono?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-3 py-1 text-sm">
-      <span className="text-text-muted">{label}</span>
+      <span className="shrink-0 text-text-muted">{label}</span>
       <span
-        className={`truncate text-right text-text-primary ${mono ? "font-mono text-xs" : ""}`}
+        className={`min-w-0 truncate text-right text-text-primary ${mono ? "font-mono text-xs" : ""}`}
         title={typeof value === "string" ? value : undefined}
       >
         {value}

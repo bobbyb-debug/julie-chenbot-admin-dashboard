@@ -45,7 +45,7 @@ export default async function ActivityPage({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex gap-1 rounded-lg border border-border-subtle bg-bg-surface p-1">
+        <div className="flex flex-wrap gap-1 rounded-lg border border-border-subtle bg-bg-surface p-1">
           <FilterLink label="All" active={!params.severity} href={buildHref(params, { severity: undefined })} />
           {severities.map((s) => (
             <FilterLink
@@ -57,18 +57,18 @@ export default async function ActivityPage({
           ))}
         </div>
 
-        <form action="/dashboard/activity" className="flex items-center gap-2">
+        <form action="/dashboard/activity" className="flex w-full items-center gap-2 sm:w-auto">
           {params.severity && <input type="hidden" name="severity" value={params.severity} />}
           <input
             type="search"
             name="q"
             defaultValue={params.q}
             placeholder="Search..."
-            className="rounded-lg border border-border-default bg-bg-surface px-3 py-1.5 text-sm text-text-primary outline-none focus:border-accent"
+            className="w-full min-w-0 rounded-lg border border-border-default bg-bg-surface px-3 py-1.5 text-sm text-text-primary outline-none focus:border-accent sm:w-48"
           />
         </form>
 
-        <div className="ml-auto flex gap-1 rounded-lg border border-border-subtle bg-bg-surface p-1">
+        <div className="flex flex-wrap gap-1 rounded-lg border border-border-subtle bg-bg-surface p-1 sm:ml-auto">
           {LIMITS.map((l) => (
             <FilterLink key={l} label={String(l)} active={limit === l} href={buildHref(params, { limit: String(l) })} />
           ))}

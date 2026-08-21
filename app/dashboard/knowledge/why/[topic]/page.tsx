@@ -71,8 +71,8 @@ export default async function WhyPage({ params }: { params: Promise<{ topic: str
           <ul className="flex flex-col divide-y divide-border-subtle">
             {data.history.map((item) => (
               <li key={item.id} className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
                     <KnowledgeTypeBadge type={item.type} />
                     <span className={`text-sm ${item.active ? "text-text-primary" : "text-text-muted line-through"}`}>
                       {item.content}
@@ -94,7 +94,8 @@ export default async function WhyPage({ params }: { params: Promise<{ topic: str
           <ul className="flex flex-col gap-2">
             {data.related_facts.map((item) => (
               <li key={item.id} className="flex items-start gap-1.5 text-sm text-text-secondary">
-                <BookOpen size={13} className="mt-0.5 shrink-0 text-text-muted" aria-hidden /> {item.content}
+                <BookOpen size={13} className="mt-0.5 shrink-0 text-text-muted" aria-hidden />
+                <span className="min-w-0">{item.content}</span>
               </li>
             ))}
           </ul>

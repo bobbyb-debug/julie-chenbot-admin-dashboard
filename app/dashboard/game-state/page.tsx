@@ -43,14 +43,14 @@ export default async function GameStatePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-lg font-semibold text-text-primary">Game State</h1>
           <p className="text-sm text-text-muted">Official facts, set via this dashboard</p>
         </div>
         <Link
           href="/dashboard/knowledge/teach?mode=state"
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-strong"
+          className="shrink-0 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-strong"
         >
           Update State
         </Link>
@@ -132,11 +132,11 @@ export default async function GameStatePage() {
         <Card title="Other Official Facts">
           <ul className="flex flex-col gap-2">
             {otherTopics.map((item) => (
-              <li key={item.topic} className="flex items-baseline justify-between text-sm">
-                <span className="font-medium text-text-primary">
+              <li key={item.topic} className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
+                <span className="shrink-0 font-medium text-text-primary">
                   {item.topic.replace(/_/g, " ")}
                 </span>
-                <span className="text-text-secondary">{item.content}</span>
+                <span className="min-w-0 text-right text-text-secondary">{item.content}</span>
               </li>
             ))}
           </ul>
@@ -182,8 +182,8 @@ function formatUsedValue(content: string): string {
 
 function FieldHeader({ label, topic }: { label: string; topic: string }) {
   return (
-    <div className="flex items-start justify-between">
-      <div className="text-xs font-medium text-text-secondary">{label}</div>
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0 text-xs font-medium text-text-secondary">{label}</div>
       <Link
         href={`/dashboard/knowledge/why/${topic}`}
         className="shrink-0 rounded-lg border border-border-default px-2.5 py-1 text-xs text-text-secondary hover:bg-bg-hover hover:text-text-primary"
@@ -213,9 +213,9 @@ function OfficialValue({ item }: { item: OfficialStateItem | undefined }) {
 
 function PovField({ label, value }: { label: string; value: string | null }) {
   return (
-    <div>
+    <div className="min-w-0">
       <div className="text-xs font-medium text-text-secondary">{label}</div>
-      <div className={`mt-0.5 text-sm ${value === null ? "italic text-text-muted" : "text-text-primary"}`}>
+      <div className={`mt-0.5 truncate text-sm ${value === null ? "italic text-text-muted" : "text-text-primary"}`}>
         {value ?? "Not available"}
       </div>
     </div>
@@ -257,9 +257,9 @@ function NomineeTimeline({
 
 function Field({ label, value, badge }: { label: string; value: ReactNode; badge?: ReactNode }) {
   return (
-    <div>
+    <div className="min-w-0">
       <div className="text-xs font-medium text-text-secondary">{label}</div>
-      <div className="mt-0.5 flex items-center gap-2 text-sm text-text-primary">
+      <div className="mt-0.5 flex flex-wrap items-center gap-2 break-words text-sm text-text-primary">
         {value}
         {badge}
       </div>

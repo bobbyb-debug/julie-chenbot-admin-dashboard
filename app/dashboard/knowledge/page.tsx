@@ -72,15 +72,15 @@ export default async function KnowledgePage({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-lg font-semibold text-text-primary">Knowledge Center</h1>
           <p className="text-sm text-text-muted">What Julie has been explicitly taught.</p>
         </div>
         {canTeach && (
           <Link
             href="/dashboard/knowledge/teach"
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-strong"
+            className="shrink-0 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-strong"
           >
             + Teach Julie
           </Link>
@@ -90,7 +90,7 @@ export default async function KnowledgePage({
       {gameState.ok && <CurrentStatePanel gameState={gameState.data} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-1 rounded-lg border border-border-subtle bg-bg-surface p-1">
+        <div className="flex flex-wrap gap-1 rounded-lg border border-border-subtle bg-bg-surface p-1">
           {TABS.map((tab) => {
             const active = (params.type ?? "all") === tab.key;
             return (
@@ -107,9 +107,9 @@ export default async function KnowledgePage({
           })}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <StatusToggle params={params} />
-          <form action="/dashboard/knowledge" className="flex items-center gap-2">
+          <form action="/dashboard/knowledge" className="flex w-full items-center gap-2 sm:w-auto">
             {params.type && <input type="hidden" name="type" value={params.type} />}
             {params.active && <input type="hidden" name="active" value={params.active} />}
             {params.limit && <input type="hidden" name="limit" value={params.limit} />}
@@ -118,7 +118,7 @@ export default async function KnowledgePage({
               name="q"
               defaultValue={params.q}
               placeholder="Search content, type, or topic..."
-              className="rounded-lg border border-border-default bg-bg-surface px-3 py-1.5 text-sm text-text-primary outline-none focus:border-accent"
+              className="w-full min-w-0 rounded-lg border border-border-default bg-bg-surface px-3 py-1.5 text-sm text-text-primary outline-none focus:border-accent sm:w-56"
             />
           </form>
         </div>
@@ -229,7 +229,7 @@ function CurrentStatePanel({ gameState }: { gameState: GameStateResponse }) {
     >
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {fields.map((f) => (
-          <div key={f.label} className="rounded-lg border border-border-subtle p-3">
+          <div key={f.label} className="min-w-0 rounded-lg border border-border-subtle p-3">
             <div className="text-xs font-medium text-text-secondary">{f.label}</div>
             {f.item ? (
               <>
@@ -271,8 +271,8 @@ function PaginationBar({
         Showing {shown === 0 ? 0 : start + 1}–{start + shown} of {total}
       </p>
 
-      <div className="flex items-center gap-3">
-        <div className="flex gap-1 rounded-lg border border-border-subtle bg-bg-surface p-1">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap gap-1 rounded-lg border border-border-subtle bg-bg-surface p-1">
           {PAGE_SIZES.map((size) => (
             <Link
               key={size}
@@ -348,7 +348,7 @@ function StatusToggle({ params }: { params: KnowledgeSearchParams }) {
   ];
 
   return (
-    <div className="flex gap-1 rounded-lg border border-border-subtle bg-bg-surface p-1">
+    <div className="flex flex-wrap gap-1 rounded-lg border border-border-subtle bg-bg-surface p-1">
       {options.map((opt) => {
         const active = (params.active ?? undefined) === opt.key;
         return (

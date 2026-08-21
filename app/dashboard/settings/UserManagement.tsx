@@ -54,9 +54,9 @@ export function UserManagement({ users, currentUserId }: { users: UserRow[]; cur
       <ul className="flex flex-col divide-y divide-border-subtle">
         {users.map((user) => (
           <li key={user.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-text-primary">{user.email}</span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="break-all text-sm font-medium text-text-primary">{user.email}</span>
                 {user.id === currentUserId && <span className="text-xs text-text-muted">(you)</span>}
                 {!!user.disabled && (
                   <span className="rounded bg-status-problem/10 px-1.5 py-0.5 text-[10px] font-medium text-status-problem">
